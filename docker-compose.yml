@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: jobbr_postgres
+    environment:
+      POSTGRES_DB: jobbr
+      POSTGRES_USER: jobbr
+      POSTGRES_PASSWORD: jobbr
+    ports:
+      - "5432:5432"
+    volumes:
+      - jobbr_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobbr -d jobbr"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  jobbr_postgres_data:

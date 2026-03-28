@@ -1,0 +1,50 @@
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
+
+from app.config import settings
+
+engine = create_async_engine(settings.get_database_url(), echo=False)
+
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+async def init_db():
+    from app import models  # noqa: F401
+    from sqlalchemy import text
+
+    async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        await conn.run_sync(Base.metadata.create_all)
+        # Add embedding columns to existing tables that predate this migration
+        await conn.execute(text(
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS offer_embedding vector(1024)"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS seek_embedding vector(1024)"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS work_history text"
+        ))
+        # admins table is created by create_all; no ALTER needed
+        await conn.execute(text(
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS education text"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS linkedin_url varchar"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS website_url varchar"
+        ))
