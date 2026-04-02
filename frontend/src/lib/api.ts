@@ -158,7 +158,7 @@ export const api = {
 
   admin: {
     profiles: () => request<Profile[]>("/admin/profiles"),
-    waitlist: () => request<{ id: string; email: string; status: string; created_at: string; approved_at: string | null }[]>("/admin/waitlist"),
+    waitlist: () => request<{ id: string; email: string; first_name: string | null; last_name: string | null; status: string; created_at: string; approved_at: string | null }[]>("/admin/waitlist"),
     approve: (email: string) =>
       request<{ message: string }>(`/admin/waitlist/${encodeURIComponent(email)}/approve`, { method: "POST" }),
     deleteProfile: (profileId: string) =>

@@ -101,20 +101,26 @@ function DashboardContent() {
 
   if (loadingProfile) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      </>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">
-        Profile not found.{" "}
-        <Link href="/profile/create" className="text-blue-400 ml-1 underline">
-          Create one
-        </Link>
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">
+          Profile not found.{" "}
+          <Link href="/profile/create" className="text-blue-400 ml-1 underline">
+            Create one
+          </Link>
+        </div>
+      </>
     );
   }
 
