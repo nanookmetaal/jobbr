@@ -4,7 +4,8 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, Profile, AgentAnalysis, Notification } from "@/lib/api";
-import { isAuthenticated, clearSession } from "@/lib/auth";
+import { isAuthenticated } from "@/lib/auth";
+import Navbar from "@/components/Navbar";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
@@ -120,69 +121,51 @@ function DashboardContent() {
   const analystResult = analyses.find((a) => a.agent_type === "profile_analyst");
   const coachResult = analyses.find((a) => a.agent_type === "profile_coach");
   return (
-    <main className="min-h-screen bg-gray-950 px-4 py-12">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gray-950 px-4 py-10">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/" className="text-gray-500 hover:text-gray-300 transition-colors text-sm">
-            - Back to Home
-          </Link>
-
-          <div className="flex items-center gap-3">
-            {/* Notification Bell */}
-            <div className="relative" ref={notifRef}>
-              <button
-                onClick={() => setNotifOpen((o) => !o)}
-                className="relative p-2 rounded-full hover:bg-gray-800 transition-colors text-gray-400 hover:text-white"
-                aria-label="Notifications"
-              >
-                <BellIcon />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </button>
-
-              {notifOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-40 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-                    <span className="font-semibold text-white text-sm">Notifications</span>
-                    {unreadCount > 0 && (
-                      <span className="text-xs text-gray-400">{unreadCount} unread</span>
-                    )}
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-gray-500 text-sm">
-                        No notifications yet
-                      </div>
-                    ) : (
-                      notifications.map((notif) => (
-                        <NotificationItem
-                          key={notif.id}
-                          notification={notif}
-                          onMarkRead={handleMarkRead}
-                        />
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Link
-              href="/matches"
-              className="text-blue-400 hover:text-blue-300 transition-colors text-sm"
-            >
-              View All Matches -
-            </Link>
-
+        <div className="flex items-center justify-end mb-6">
+          {/* Notification Bell */}
+          <div className="relative" ref={notifRef}>
             <button
-              onClick={() => { clearSession(); router.push("/"); }}
-              className="text-gray-500 hover:text-red-400 transition-colors text-sm"
+              onClick={() => setNotifOpen((o) => !o)}
+              className="relative p-2 rounded-full hover:bg-gray-800 transition-colors text-gray-400 hover:text-white"
+              aria-label="Notifications"
             >
-              Logout
+              <BellIcon />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-40 overflow-hidden">
+                <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
+                  <span className="font-semibold text-white text-sm">Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="text-xs text-gray-400">{unreadCount} unread</span>
+                  )}
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-gray-500 text-sm">
+                      No notifications yet
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <NotificationItem
+                        key={notif.id}
+                        notification={notif}
+                        onMarkRead={handleMarkRead}
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -204,6 +187,7 @@ function DashboardContent() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl font-bold text-white">{profile.name}</h2>
                 <ProfileTypeBadge type={profile.profile_type} />
+                {profile.secondary_role && <ProfileTypeBadge type={profile.secondary_role} />}
               </div>
               <p className="text-gray-400 text-sm mt-0.5">{profile.title}</p>
               <p className="text-gray-500 text-xs mt-0.5">{profile.location}</p>
@@ -266,6 +250,7 @@ function DashboardContent() {
         )}
       </div>
     </main>
+    </>
   );
 }
 

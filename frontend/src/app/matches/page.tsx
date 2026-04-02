@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import { api, Match } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
+import Navbar from "@/components/Navbar";
 
 export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -105,7 +105,9 @@ export default function MatchesPage() {
   const empty = !loading && matches.length === 0;
 
   return (
-    <main className="min-h-screen bg-gray-950 px-4 py-12">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gray-950 px-4 py-10">
       {/* Match Modal */}
       {matchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -150,13 +152,7 @@ export default function MatchesPage() {
       )}
 
       <div className="max-w-lg mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/dashboard" className="text-gray-500 hover:text-gray-300 transition-colors text-sm">
-            - Back to Dashboard
-          </Link>
-        </div>
-
-        <h1 className="text-3xl font-bold text-white mb-2">Matches</h1>
+        <h1 className="text-3xl font-bold text-white mb-2 mt-8">Matches</h1>
         <p className="text-gray-400 text-sm mb-8">
           Curated connections based on complementary goals and skills.
         </p>
@@ -210,6 +206,7 @@ export default function MatchesPage() {
         )}
       </div>
     </main>
+    </>
   );
 }
 

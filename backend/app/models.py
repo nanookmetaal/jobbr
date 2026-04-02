@@ -27,6 +27,7 @@ class Profile(Base):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
     profile_type: Mapped[str] = mapped_column(ProfileType, nullable=False)
+    secondary_role: Mapped[str | None] = mapped_column(String, nullable=True)  # "mentor" or "mentee"
     title: Mapped[str] = mapped_column(String, nullable=False)
     bio: Mapped[str] = mapped_column(Text, nullable=False)
     skills: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
@@ -51,19 +52,19 @@ class Profile(Base):
         "AgentAnalysis", back_populates="profile", cascade="all, delete-orphan"
     )
     matches_as_a: Mapped[list["Match"]] = relationship(
-        "Match", foreign_keys="Match.profile_id_a", back_populates="profile_a"
+        "Match", foreign_keys="Match.profile_id_a", back_populates="profile_a", passive_deletes=True
     )
     matches_as_b: Mapped[list["Match"]] = relationship(
-        "Match", foreign_keys="Match.profile_id_b", back_populates="profile_b"
+        "Match", foreign_keys="Match.profile_id_b", back_populates="profile_b", passive_deletes=True
     )
     swipes_given: Mapped[list["Swipe"]] = relationship(
-        "Swipe", foreign_keys="Swipe.swiper_id", back_populates="swiper"
+        "Swipe", foreign_keys="Swipe.swiper_id", back_populates="swiper", passive_deletes=True
     )
     swipes_received: Mapped[list["Swipe"]] = relationship(
-        "Swipe", foreign_keys="Swipe.swiped_id", back_populates="swiped"
+        "Swipe", foreign_keys="Swipe.swiped_id", back_populates="swiped", passive_deletes=True
     )
     notifications: Mapped[list["Notification"]] = relationship(
-        "Notification", foreign_keys="Notification.profile_id", back_populates="profile"
+        "Notification", foreign_keys="Notification.profile_id", back_populates="profile", passive_deletes=True
     )
 
 
@@ -158,6 +159,8 @@ class WaitlistEntry(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    first_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String, nullable=True)
     status: Mapped[str] = mapped_column(String, default="pending", nullable=False)  # pending | approved
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

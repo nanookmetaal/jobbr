@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, ProfileCreate, ProfileType } from "@/lib/api";
 import { isAuthenticated, getAuthEmail } from "@/lib/auth";
+import { sanitizeLinkedInUrl, sanitizeWebsiteUrl } from "@/lib/urls";
 
 const PROFILE_TYPES: { value: ProfileType; label: string; desc: string }[] = [
   { value: "job_seeker", label: "Job Seeker", desc: "Looking for a new role" },
   { value: "employer", label: "Employer", desc: "Hiring talent" },
-  { value: "mentor", label: "Mentor", desc: "Sharing knowledge & experience" },
   { value: "mentee", label: "Mentee", desc: "Looking for guidance" },
+  { value: "mentor", label: "Mentor", desc: "Sharing knowledge & experience" },
 ];
 
 const STEPS = ["Basic Info", "Background", "Goals", "Review"];
@@ -18,6 +19,7 @@ type FormData = {
   name: string;
   email: string;
   profile_type: ProfileType;
+  secondary_role: "mentor" | "mentee" | null;
   location: string;
   linkedin_url: string;
   website_url: string;
@@ -35,6 +37,7 @@ const initialForm: FormData = {
   name: "",
   email: "",
   profile_type: "job_seeker",
+  secondary_role: null,
   location: "",
   linkedin_url: "",
   website_url: "",
@@ -67,6 +70,45 @@ export default function CreateProfilePage() {
   const update = (key: keyof FormData, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const VALID_COMBOS: [ProfileType, ProfileType][] = [
+    ["job_seeker", "mentee"],
+    ["employer", "mentor"],
+  ];
+
+  const handleTypeClick = (clicked: ProfileType) => {
+    const current = form.profile_type;
+    const secondary = form.secondary_role as ProfileType | null;
+
+    // Deselect secondary
+    if (clicked === secondary) {
+      update("secondary_role", null);
+      return;
+    }
+    // Clicking current primary when secondary exists - make secondary the primary
+    if (clicked === current && secondary) {
+      update("profile_type", secondary);
+      update("secondary_role", null);
+      return;
+    }
+    // Try pairing with current primary
+    const isValidAddition = VALID_COMBOS.some(
+      ([a, b]) => (a === current && b === clicked) || (b === current && a === clicked)
+    );
+    if (isValidAddition) {
+      // Ensure job_seeker/employer stays primary
+      if (clicked === "job_seeker" || clicked === "employer") {
+        update("profile_type", clicked);
+        update("secondary_role", current);
+      } else {
+        update("secondary_role", clicked);
+      }
+      return;
+    }
+    // Replace
+    update("profile_type", clicked);
+    update("secondary_role", null);
+  };
+
   const handleSkillsBlur = () => {
     if (!form.skillsInput.trim()) return;
     const newSkills = form.skillsInput.split(",").map((s) => s.trim()).filter(Boolean);
@@ -92,6 +134,7 @@ export default function CreateProfilePage() {
         name: form.name,
         email: form.email,
         profile_type: form.profile_type,
+        secondary_role: form.secondary_role,
         location: form.location,
         title: form.title,
         bio: form.bio,
@@ -159,17 +202,20 @@ export default function CreateProfilePage() {
               </Field>
               <Field label="I am a...">
                 <div className="grid grid-cols-2 gap-3">
-                  {PROFILE_TYPES.map((pt) => (
-                    <button key={pt.value} type="button" onClick={() => update("profile_type", pt.value)}
-                      className={`text-left p-3 rounded-xl border transition-colors ${
-                        form.profile_type === pt.value
-                          ? "border-blue-500 bg-blue-500/10 text-white"
-                          : "border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600"
-                      }`}>
-                      <div className="font-medium text-sm">{pt.label}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">{pt.desc}</div>
-                    </button>
-                  ))}
+                  {PROFILE_TYPES.map((pt) => {
+                    const isSelected = form.profile_type === pt.value || form.secondary_role === pt.value;
+                    return (
+                      <button key={pt.value} type="button" onClick={() => handleTypeClick(pt.value)}
+                        className={`text-left p-3 rounded-xl border transition-colors ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-500/10 text-white"
+                            : "border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600"
+                        }`}>
+                        <div className="font-medium text-sm">{pt.label}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{pt.desc}</div>
+                      </button>
+                    );
+                  })}
                 </div>
               </Field>
               <Field label="Location">
@@ -177,11 +223,13 @@ export default function CreateProfilePage() {
                   placeholder="San Francisco, CA" className="input" />
               </Field>
               <Field label="LinkedIn URL" hint="Optional - paste your LinkedIn profile link">
-                <input type="url" value={form.linkedin_url} onChange={(e) => update("linkedin_url", e.target.value)}
+                <input type="text" value={form.linkedin_url} onChange={(e) => update("linkedin_url", e.target.value)}
+                  onBlur={() => update("linkedin_url", sanitizeLinkedInUrl(form.linkedin_url))}
                   placeholder="https://linkedin.com/in/yourname" className="input" />
               </Field>
               <Field label="Website / Portfolio" hint="Optional - GitHub, personal site, or portfolio">
-                <input type="url" value={form.website_url} onChange={(e) => update("website_url", e.target.value)}
+                <input type="text" value={form.website_url} onChange={(e) => update("website_url", e.target.value)}
+                  onBlur={() => update("website_url", sanitizeWebsiteUrl(form.website_url))}
                   placeholder="https://github.com/yourname" className="input" />
               </Field>
             </div>

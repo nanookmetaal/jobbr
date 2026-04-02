@@ -8,9 +8,12 @@ import { isAuthenticated } from "@/lib/auth";
 export default function Home() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
+  const [needName, setNeedName] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,7 +27,29 @@ export default function Home() {
     setError(null);
     try {
       const res = await api.auth.requestMagicLink(email.trim());
+      if (res.message === "need_name") {
+        setNeedName(true);
+      } else if (res.message === "request_pending") {
+        setPending(true);
+      } else {
+        setSent(true);
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstName.trim() || !lastName.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.auth.requestMagicLink(email.trim(), firstName.trim(), lastName.trim());
       if (res.message === "request_pending") {
+        setNeedName(false);
         setPending(true);
       } else {
         setSent(true);
@@ -60,7 +85,47 @@ export default function Home() {
         </p>
 
         <div className="w-full max-w-sm mx-auto">
-          {sent ? (
+          {needName ? (
+            <form onSubmit={handleNameSubmit} className="flex flex-col gap-3">
+              <p className="text-sm text-gray-400 text-center mb-1">
+                One more thing - what&apos;s your name?
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => { setFirstName(e.target.value); setError(null); }}
+                  placeholder="First name"
+                  className="flex-1 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:outline-none px-4 py-3.5 text-sm text-white placeholder-gray-500 transition-colors"
+                  autoFocus
+                />
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => { setLastName(e.target.value); setError(null); }}
+                  placeholder="Last name"
+                  className="flex-1 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:outline-none px-4 py-3.5 text-sm text-white placeholder-gray-500 transition-colors"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !firstName.trim() || !lastName.trim()}
+                className="rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3.5 font-semibold text-white transition-colors"
+              >
+                {loading ? "Requesting..." : "Request access"}
+              </button>
+              {error && (
+                <p className="text-xs text-red-400 text-center">{error}</p>
+              )}
+              <button
+                type="button"
+                onClick={() => { setNeedName(false); setEmail(""); }}
+                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                Use a different email
+              </button>
+            </form>
+          ) : sent ? (
             <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 px-6 py-8 text-center">
               <div className="text-2xl mb-3">📬</div>
               <p className="text-white font-semibold mb-1">Check your email</p>

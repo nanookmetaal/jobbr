@@ -13,6 +13,7 @@ class ProfileCreate(BaseModel):
     email: str
     avatar_url: str | None = None
     profile_type: ProfileTypeEnum
+    secondary_role: Literal["mentor", "mentee"] | None = None
     title: str
     bio: str
     skills: list[str] = []
@@ -30,6 +31,7 @@ class ProfileUpdate(BaseModel):
     email: str | None = None
     avatar_url: str | None = None
     profile_type: ProfileTypeEnum | None = None
+    secondary_role: Literal["mentor", "mentee"] | None = None
     title: str | None = None
     bio: str | None = None
     skills: list[str] | None = None
@@ -49,6 +51,7 @@ class ProfileResponse(BaseModel):
     email: str
     avatar_url: str | None
     profile_type: str
+    secondary_role: str | None
     title: str
     bio: str
     skills: list[str]

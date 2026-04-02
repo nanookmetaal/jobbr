@@ -8,6 +8,7 @@ export interface Profile {
   email: string;
   avatar_url: string | null;
   profile_type: ProfileType;
+  secondary_role: "mentor" | "mentee" | null;
   title: string;
   bio: string;
   skills: string[];
@@ -28,6 +29,7 @@ export interface ProfileCreate {
   email: string;
   avatar_url?: string;
   profile_type: ProfileType;
+  secondary_role?: "mentor" | "mentee" | null;
   title: string;
   bio: string;
   skills: string[];
@@ -100,10 +102,10 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   auth: {
-    requestMagicLink: (email: string) =>
+    requestMagicLink: (email: string, firstName?: string, lastName?: string) =>
       request<{ message: string }>("/auth/magic-link", {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, first_name: firstName, last_name: lastName }),
       }),
     verify: (token: string) =>
       request<{ token: string; email: string; profile_id: string | null; is_admin: boolean }>(

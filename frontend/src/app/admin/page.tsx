@@ -3,11 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, Profile } from "@/lib/api";
-import { isAuthenticated, isAdminSession, clearSession } from "@/lib/auth";
+import { isAuthenticated, isAdminSession } from "@/lib/auth";
+import Navbar from "@/components/Navbar";
 
 type WaitlistEntry = {
   id: string;
   email: string;
+  first_name: string | null;
+  last_name: string | null;
   status: string;
   created_at: string;
   approved_at: string | null;
@@ -63,8 +66,6 @@ export default function AdminPage() {
     }
   };
 
-  const handleSignOut = () => { clearSession(); router.replace("/"); };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -74,16 +75,13 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 px-6 py-10">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gray-950 px-6 py-10">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-            <p className="text-gray-500 text-sm mt-1">Manage profiles and access requests</p>
-          </div>
-          <button onClick={handleSignOut} className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
-            Sign out
-          </button>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1">Manage profiles and access requests</p>
         </div>
 
         {error && (
@@ -111,11 +109,16 @@ export default function AdminPage() {
             {profiles.map((p) => (
               <div key={p.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
+                  <div className="flex items-center gap-3 mb-1 flex-wrap">
                     <span className="font-semibold text-white">{p.name}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${typeStyle(p.profile_type)}`}>
                       {p.profile_type.replace("_", " ")}
                     </span>
+                    {p.secondary_role && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full border ${typeStyle(p.secondary_role)}`}>
+                        {p.secondary_role}
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-gray-400">{p.email}</p>
                   <p className="text-sm text-gray-500 mt-1">{p.title}</p>
@@ -157,7 +160,12 @@ export default function AdminPage() {
             {waitlist.map((e) => (
               <div key={e.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between gap-4">
                 <div>
-                  <p className="font-medium text-white">{e.email}</p>
+                  {(e.first_name || e.last_name) && (
+                    <p className="font-medium text-white">
+                      {[e.first_name, e.last_name].filter(Boolean).join(" ")}
+                    </p>
+                  )}
+                  <p className={e.first_name || e.last_name ? "text-sm text-gray-400" : "font-medium text-white"}>{e.email}</p>
                   <p className="text-xs text-gray-500 mt-1">
                     Requested {new Date(e.created_at).toLocaleDateString()}
                     {e.approved_at && ` - Approved ${new Date(e.approved_at).toLocaleDateString()}`}
@@ -184,6 +192,7 @@ export default function AdminPage() {
         )}
       </div>
     </main>
+    </>
   );
 }
 

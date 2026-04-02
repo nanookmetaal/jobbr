@@ -84,9 +84,12 @@ async def generate_embeddings(profile: dict) -> tuple[list[float], list[float]]:
     if profile.get('education'):
         parts.append(f"Education: {profile['education']}")
     offer_text = ". ".join(p for p in parts if p)
+    roles = profile.get('profile_type', '')
+    if profile.get('secondary_role'):
+        roles += f" and {profile['secondary_role']}"
     seek_text = (
         f"{profile.get('looking_for', '')}. "
-        f"Profile type: {profile.get('profile_type', '')}."
+        f"Profile type: {roles}."
     )
 
     result = await _voyage.embed(

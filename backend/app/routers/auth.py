@@ -23,6 +23,8 @@ def _send_email(to: str, subject: str, html: str) -> None:
 
 class MagicLinkRequest(BaseModel):
     email: str
+    first_name: str | None = None
+    last_name: str | None = None
 
 
 @router.post("/magic-link")
@@ -45,10 +47,19 @@ async def request_magic_link(body: MagicLinkRequest, db: AsyncSession = Depends(
         entry = waitlist_result.scalar_one_or_none()
 
         if entry is None:
-            # New signup - add to waitlist and notify admin
-            db.add(WaitlistEntry(email=email))
+            # New signup - ask for name first if not provided
+            if not body.first_name or not body.last_name:
+                return {"message": "need_name"}
+
+            # Add to waitlist and notify admin
+            db.add(WaitlistEntry(
+                email=email,
+                first_name=body.first_name.strip(),
+                last_name=body.last_name.strip(),
+            ))
             await db.commit()
 
+            full_name = f"{body.first_name.strip()} {body.last_name.strip()}"
             approve_url = (
                 f"{settings.FRONTEND_URL}/auth/approve"
                 f"?email={email}&secret={settings.ADMIN_SECRET}"
@@ -56,9 +67,9 @@ async def request_magic_link(body: MagicLinkRequest, db: AsyncSession = Depends(
             try:
                 _send_email(
                     to=settings.ADMIN_EMAIL,
-                    subject=f"Jobbr access request from {email}",
+                    subject=f"Jobbr access request from {full_name}",
                     html=(
-                        f"<p><strong>{email}</strong> has requested access to Jobbr.</p>"
+                        f"<p><strong>{full_name}</strong> ({email}) has requested access to Jobbr.</p>"
                         f'<p><a href="{approve_url}" style="background:#2563eb;color:#fff;'
                         f'padding:10px 20px;border-radius:6px;text-decoration:none;">'
                         f"Approve access</a></p>"

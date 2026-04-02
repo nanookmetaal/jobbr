@@ -76,6 +76,7 @@ async def update_profile(
         "experience_years": profile.experience_years,
         "looking_for": profile.looking_for,
         "profile_type": profile.profile_type,
+        "secondary_role": profile.secondary_role,
     })
     profile.offer_embedding = offer_emb
     profile.seek_embedding = seek_emb
