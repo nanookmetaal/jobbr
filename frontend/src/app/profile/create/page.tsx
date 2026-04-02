@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, ProfileCreate, ProfileType } from "@/lib/api";
 import { isAuthenticated, getAuthEmail } from "@/lib/auth";
 import { sanitizeLinkedInUrl, sanitizeWebsiteUrl } from "@/lib/urls";
+import Navbar from "@/components/Navbar";
 
 const PROFILE_TYPES: { value: ProfileType; label: string; desc: string }[] = [
   { value: "job_seeker", label: "Job Seeker", desc: "Looking for a new role" },
@@ -157,7 +158,9 @@ export default function CreateProfilePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-16">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-16">
       <div className="w-full max-w-xl">
         <h1 className="text-3xl font-bold text-white mb-2 text-center">Create Your Profile</h1>
         <p className="text-gray-400 text-center mb-8 text-sm">
@@ -344,6 +347,7 @@ export default function CreateProfilePage() {
         .input::placeholder { color: #4b5563; }
       `}</style>
     </main>
+    </>
   );
 }
 

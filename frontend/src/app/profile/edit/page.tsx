@@ -6,6 +6,7 @@ import Link from "next/link";
 import { api, ProfileType } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import { sanitizeLinkedInUrl, sanitizeWebsiteUrl } from "@/lib/urls";
+import Navbar from "@/components/Navbar";
 
 const PROFILE_TYPES: { value: ProfileType; label: string; desc: string }[] = [
   { value: "job_seeker", label: "Job Seeker", desc: "Looking for a new role" },
@@ -151,22 +152,30 @@ export default function EditProfilePage() {
 
   if (loadingProfile) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <Spinner />
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+          <Spinner />
+        </div>
+      </>
     );
   }
 
   if (!form) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">
-        {error ?? "Profile not found."}
-      </div>
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">
+          {error ?? "Profile not found."}
+        </div>
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-950 px-4 py-12">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gray-950 px-4 py-12">
       <div className="w-full max-w-xl mx-auto">
         <div className="mb-8">
           <Link href="/dashboard" className="text-gray-500 hover:text-gray-300 transition-colors text-sm">
@@ -336,6 +345,7 @@ export default function EditProfilePage() {
         }
       `}</style>
     </main>
+    </>
   );
 }
 
