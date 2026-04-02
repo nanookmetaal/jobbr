@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { clearSession, isAdminSession } from "@/lib/auth";
+import { clearSession, isAdminSession, getAuthEmail } from "@/lib/auth";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = isAdminSession();
+  const email = getAuthEmail();
 
   const handleSignOut = () => {
     clearSession();
@@ -35,9 +36,12 @@ export default function Navbar() {
               Admin
             </NavLink>
           )}
+          {email && (
+            <span className="ml-2 text-sm text-gray-500 hidden sm:block">{email}</span>
+          )}
           <button
             onClick={handleSignOut}
-            className="ml-2 px-3 py-1.5 text-sm text-gray-400 hover:text-red-400 transition-colors"
+            className="ml-1 px-3 py-1.5 text-sm text-gray-400 hover:text-red-400 transition-colors"
           >
             Sign out
           </button>
