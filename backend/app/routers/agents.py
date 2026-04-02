@@ -1,10 +1,10 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.agents.llm import analyze_profile
+from app.agents.llm import analyze_profile, rank_matches
 from app.database import get_db
 from app.dependencies import get_current_email
 from app.models import AgentAnalysis, Match, Profile, Swipe
@@ -54,12 +54,15 @@ async def run_analysis(
         "name": profile.name,
         "email": profile.email,
         "profile_type": profile.profile_type,
+        "secondary_role": profile.secondary_role,
         "title": profile.title,
         "bio": profile.bio,
         "skills": profile.skills,
         "experience_years": profile.experience_years,
         "location": profile.location,
         "looking_for": profile.looking_for,
+        "work_history": profile.work_history,
+        "education": profile.education,
     }
 
     results = await analyze_profile(profile_dict)
@@ -141,16 +144,21 @@ async def run_matches(
         "employer": ["job_seeker", "mentee"],
         "mentor": ["job_seeker", "mentee"],
     }
-    compatible_types = compatible.get(profile.profile_type, [])
+    my_compatible_types: set[str] = set(compatible.get(profile.profile_type, []))
+    if profile.secondary_role:
+        my_compatible_types.update(compatible.get(profile.secondary_role, []))
 
-    if not compatible_types:
+    if not my_compatible_types:
         return []
 
-    # Fetch all compatible candidates that have embeddings
+    # Fetch candidates whose primary or secondary role is compatible
     candidates_result = await db.execute(
         select(Profile).where(
             Profile.id != profile.id,
-            Profile.profile_type.in_(compatible_types),
+            or_(
+                Profile.profile_type.in_(my_compatible_types),
+                Profile.secondary_role.in_(my_compatible_types),
+            ),
             Profile.offer_embedding.is_not(None),
         )
     )
@@ -170,18 +178,48 @@ async def run_matches(
     )
     ranked = scored[:10]
 
+    # LLM ranking pass - enrich top candidates with scores, analysis, conversation starters
+    profile_dict_for_ranking = {
+        "name": profile.name,
+        "profile_type": profile.profile_type,
+        "secondary_role": profile.secondary_role,
+        "title": profile.title,
+        "bio": profile.bio,
+        "skills": profile.skills,
+        "experience_years": profile.experience_years,
+        "looking_for": profile.looking_for,
+        "work_history": profile.work_history,
+        "education": profile.education,
+    }
+    candidate_dicts = [
+        {
+            "id": str(c.id),
+            "name": c.name,
+            "profile_type": c.profile_type,
+            "secondary_role": c.secondary_role,
+            "title": c.title,
+            "bio": c.bio,
+            "skills": c.skills,
+            "experience_years": c.experience_years,
+            "looking_for": c.looking_for,
+        }
+        for c in ranked
+    ]
+    llm_rankings = await rank_matches(profile_dict_for_ranking, candidate_dicts)
+    rankings_by_id = {r["id"]: r for r in llm_rankings if isinstance(r, dict) and "id" in r}
+
     saved_matches = []
     for candidate in ranked:
+        ranking = rankings_by_id.get(str(candidate.id), {})
         match = Match(
             profile_id_a=profile.id,
             profile_id_b=candidate.id,
-            compatibility_score=0,
-            analysis="",
-            conversation_starter="",
+            compatibility_score=int(ranking.get("compatibility_score", 0)),
+            analysis=ranking.get("analysis", ""),
+            conversation_starter=ranking.get("conversation_starter", ""),
         )
         db.add(match)
         saved_matches.append((match, candidate))
-
 
     await db.commit()
 

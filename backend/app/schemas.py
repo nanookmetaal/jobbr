@@ -134,3 +134,19 @@ class CoffeeInviteCreate(BaseModel):
     from_profile_id: uuid.UUID
     to_profile_id: uuid.UUID
     message: str
+
+
+class ConnectionRequestCreate(BaseModel):
+    from_profile_id: uuid.UUID
+    to_profile_id: uuid.UUID
+    message: str
+
+
+class ConnectionRequestResponse(BaseModel):
+    id: uuid.UUID
+    from_profile_id: uuid.UUID
+    to_profile_id: uuid.UUID
+    message: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

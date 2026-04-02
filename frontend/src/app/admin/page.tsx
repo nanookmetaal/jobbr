@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, Profile } from "@/lib/api";
+import { api, Profile, SuggestedIntroduction } from "@/lib/api";
 import { isAuthenticated, isAdminSession } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
 
@@ -16,13 +16,17 @@ type WaitlistEntry = {
   approved_at: string | null;
 };
 
-type Tab = "profiles" | "waitlist";
+type Tab = "profiles" | "waitlist" | "introductions";
 
 export default function AdminPage() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("profiles");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [introductions, setIntroductions] = useState<SuggestedIntroduction[]>([]);
+  const [introLoading, setIntroLoading] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
+  const [sent, setSent] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approving, setApproving] = useState<string | null>(null);
@@ -50,6 +54,31 @@ export default function AdminPage() {
       alert("Failed to approve.");
     } finally {
       setApproving(null);
+    }
+  };
+
+  const loadIntroductions = async () => {
+    setIntroLoading(true);
+    try {
+      const data = await api.admin.suggestedIntroductions();
+      setIntroductions(data);
+    } catch {
+      setError("Failed to load suggested introductions.");
+    } finally {
+      setIntroLoading(false);
+    }
+  };
+
+  const handleSendIntroduction = async (idA: string, idB: string) => {
+    const key = [idA, idB].sort().join("-");
+    setSending(key);
+    try {
+      await api.admin.sendIntroduction(idA, idB);
+      setSent((prev) => new Set(Array.from(prev).concat(key)));
+    } catch {
+      alert("Failed to send introduction.");
+    } finally {
+      setSending(null);
     }
   };
 
@@ -90,12 +119,17 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit">
-          {(["profiles", "waitlist"] as Tab[]).map((t) => (
-            <button key={t} onClick={() => setTab(t)}
+          {(["profiles", "waitlist", "introductions"] as Tab[]).map((t) => (
+            <button key={t} onClick={() => {
+              setTab(t);
+              if (t === "introductions" && introductions.length === 0) loadIntroductions();
+            }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
                 tab === t ? "bg-blue-600 text-white" : "text-gray-400 hover:text-gray-200"
               }`}>
-              {t} {t === "profiles" ? `(${profiles.length})` : `(${waitlist.filter((e) => e.status === "pending").length} pending)`}
+              {t === "profiles" && `Profiles (${profiles.length})`}
+              {t === "waitlist" && `Waitlist (${waitlist.filter((e) => e.status === "pending").length} pending)`}
+              {t === "introductions" && "Introductions"}
             </button>
           ))}
         </div>
@@ -148,6 +182,70 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Introductions tab */}
+        {tab === "introductions" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-gray-500">
+                Top unconnected pairs ranked by compatibility. Send an introduction to email both parties.
+              </p>
+              <button onClick={loadIntroductions} disabled={introLoading}
+                className="text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors">
+                {introLoading ? "Loading..." : "Refresh"}
+              </button>
+            </div>
+            {introLoading && (
+              <div className="flex justify-center py-16">
+                <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+            {!introLoading && introductions.length === 0 && (
+              <p className="text-gray-500 text-sm">No suggestions available. Profiles may be missing embeddings.</p>
+            )}
+            <div className="space-y-3">
+              {introductions.map((intro, i) => {
+                const key = [intro.profile_a.id, intro.profile_b.id].sort().join("-");
+                const isSent = sent.has(key);
+                const isSending = sending === key;
+                return (
+                  <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1 grid grid-cols-2 gap-4">
+                        {[intro.profile_a, intro.profile_b].map((p) => (
+                          <div key={p.id}>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-white text-sm">{p.name}</span>
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full border ${typeStyle(p.profile_type)}`}>
+                                {p.profile_type.replace("_", " ")}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-400">{p.title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{p.location}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                        <span className="text-xs text-gray-600">Score: {intro.score}</span>
+                        <button
+                          onClick={() => handleSendIntroduction(intro.profile_a.id, intro.profile_b.id)}
+                          disabled={isSent || isSending}
+                          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                            isSent
+                              ? "bg-green-500/15 text-green-400 border border-green-500/25 cursor-default"
+                              : "bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white"
+                          }`}
+                        >
+                          {isSent ? "Sent" : isSending ? "Sending..." : "Introduce"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

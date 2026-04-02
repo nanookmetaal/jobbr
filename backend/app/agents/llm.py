@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Any
+from typing import Any, Optional
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -21,6 +21,16 @@ def _extract_json(text: str) -> dict:
         except json.JSONDecodeError:
             pass
     return {"raw_output": text}
+
+
+def _extract_json_array(text: str) -> Optional[list]:
+    match = re.search(r"\[.*\]", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+    return None
 
 
 async def _call(model: ChatAnthropic, system: str, human: str) -> str:
@@ -84,17 +94,61 @@ async def generate_embeddings(profile: dict) -> tuple[list[float], list[float]]:
     if profile.get('education'):
         parts.append(f"Education: {profile['education']}")
     offer_text = ". ".join(p for p in parts if p)
+
     roles = profile.get('profile_type', '')
     if profile.get('secondary_role'):
         roles += f" and {profile['secondary_role']}"
-    seek_text = (
-        f"{profile.get('looking_for', '')}. "
-        f"Profile type: {roles}."
+    seek_parts = [
+        profile.get('looking_for', ''),
+        f"Role: {roles}",
+    ]
+    if profile.get('location'):
+        seek_parts.append(f"Location: {profile['location']}")
+    if profile.get('experience_years') is not None:
+        seek_parts.append(f"Experience level: {profile['experience_years']} years")
+    if profile.get('skills'):
+        seek_parts.append(f"Background in: {', '.join(profile['skills'])}")
+    seek_text = ". ".join(p for p in seek_parts if p)
+
+    offer_result = await _voyage.embed([offer_text], model="voyage-3", input_type="document")
+    seek_result = await _voyage.embed([seek_text], model="voyage-3", input_type="query")
+    return offer_result.embeddings[0], seek_result.embeddings[0]
+
+
+async def rank_matches(profile: dict, candidates: list[dict]) -> list[dict]:
+    """Return candidates enriched with compatibility_score, analysis, conversation_starter."""
+    profile_str = json.dumps({
+        k: v for k, v in profile.items()
+        if k in ("name", "profile_type", "secondary_role", "title", "bio", "skills",
+                 "experience_years", "looking_for", "work_history", "education")
+    }, indent=2)
+
+    candidates_str = json.dumps([
+        {k: v for k, v in c.items()
+         if k in ("id", "name", "profile_type", "secondary_role", "title", "bio",
+                  "skills", "experience_years", "looking_for")}
+        for c in candidates
+    ], indent=2)
+
+    system = (
+        "You are a professional networking expert for a builders community. "
+        "Your job is to evaluate how well a set of candidates complement a given profile "
+        "and craft specific, warm introductory messages."
+    )
+    human = (
+        f"Profile:\n{profile_str}\n\n"
+        f"Candidates:\n{candidates_str}\n\n"
+        "For each candidate return a JSON array where every item has exactly these keys:\n"
+        "- 'id': the candidate's id (string)\n"
+        "- 'compatibility_score': integer 0-100 (how well they complement the profile)\n"
+        "- 'analysis': 1-2 sentences on why they are a good match\n"
+        "- 'conversation_starter': a short, specific opening message the profile could send "
+        "to this candidate (first person, warm but professional)\n\n"
+        "Return only the JSON array, no other text."
     )
 
-    result = await _voyage.embed(
-        [offer_text, seek_text],
-        model="voyage-3",
-        input_type="document",
-    )
-    return result.embeddings[0], result.embeddings[1]
+    raw = await _call(llm_fast, system, human)
+    results = _extract_json_array(raw)
+    if not results:
+        return []
+    return results

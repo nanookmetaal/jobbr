@@ -81,6 +81,20 @@ export interface Notification {
   created_at: string;
 }
 
+export interface ConnectionRequest {
+  id: string;
+  from_profile_id: string;
+  to_profile_id: string;
+  message: string;
+  created_at: string;
+}
+
+export interface SuggestedIntroduction {
+  profile_a: Profile;
+  profile_b: Profile;
+  score: number;
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -163,6 +177,13 @@ export const api = {
       request<{ message: string }>(`/admin/waitlist/${encodeURIComponent(email)}/approve`, { method: "POST" }),
     deleteProfile: (profileId: string) =>
       request<{ message: string }>(`/admin/profiles/${profileId}`, { method: "DELETE" }),
+    suggestedIntroductions: () =>
+      request<SuggestedIntroduction[]>("/admin/suggested-introductions"),
+    sendIntroduction: (profileIdA: string, profileIdB: string) =>
+      request<{ message: string }>("/admin/introductions", {
+        method: "POST",
+        body: JSON.stringify({ profile_id_a: profileIdA, profile_id_b: profileIdB }),
+      }),
   },
 
   swipes: {
@@ -180,5 +201,15 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       }),
+  },
+
+  connections: {
+    send: (data: { from_profile_id: string; to_profile_id: string; message: string }) =>
+      request<ConnectionRequest>("/connections", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    getSent: (profileId: string) =>
+      request<ConnectionRequest[]>(`/connections/sent/${profileId}`),
   },
 };

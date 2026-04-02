@@ -1,19 +1,35 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { api, Match } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { api, Match, Profile } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
 
+const TYPE_LABELS: Record<string, string> = {
+  job_seeker: "Job Seeker",
+  employer: "Employer",
+  mentor: "Mentor",
+  mentee: "Mentee",
+};
+
+const TYPE_STYLES: Record<string, string> = {
+  job_seeker: "bg-blue-500/10 text-blue-400 border-blue-500/25",
+  employer: "bg-purple-500/10 text-purple-400 border-purple-500/25",
+  mentor: "bg-amber-500/10 text-amber-400 border-amber-500/25",
+  mentee: "bg-green-500/10 text-green-400 border-green-500/25",
+};
+
 export default function MatchesPage() {
   const [matches, setMatches] = useState<Match[]>([]);
-  const [index, setIndex] = useState(0);
+  const [sentTo, setSentTo] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
-  const [matchModal, setMatchModal] = useState<Match | null>(null);
-  const [coffeeInviteSent, setCoffeeInviteSent] = useState(false);
+  const [connectTarget, setConnectTarget] = useState<Profile | null>(null);
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -32,35 +48,17 @@ export default function MatchesPage() {
   useEffect(() => {
     if (!profileId) return;
     setLoading(true);
-    api.agents
-      .getMatches(profileId)
-      .then((m) => { setMatches(m); setIndex(0); })
+    Promise.all([
+      api.agents.getMatches(profileId),
+      api.connections.getSent(profileId),
+    ])
+      .then(([m, sent]) => {
+        setMatches(m);
+        setSentTo(new Set(sent.map((r) => r.to_profile_id)));
+      })
       .catch((e) => setError(e instanceof Error ? e.message : "Failed to load matches"))
       .finally(() => setLoading(false));
   }, [profileId]);
-
-  const handleSwipe = async (direction: "left" | "right") => {
-    if (!profileId) return;
-    const match = matches[index];
-    const matchedProfileId =
-      match.profile_id_a === profileId ? match.profile_id_b : match.profile_id_a;
-
-    try {
-      const result = await api.swipes.create({
-        swiper_id: profileId,
-        swiped_id: matchedProfileId,
-        direction,
-      });
-      if (result.is_mutual) {
-        setMatchModal(match);
-        setCoffeeInviteSent(false);
-      } else {
-        setIndex((i) => i + 1);
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save swipe");
-    }
-  };
 
   const handleRefresh = async () => {
     if (!profileId) return;
@@ -69,7 +67,6 @@ export default function MatchesPage() {
     try {
       const fresh = await api.agents.findMatches(profileId);
       setMatches(fresh);
-      setIndex(0);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not find matches");
     } finally {
@@ -77,319 +74,241 @@ export default function MatchesPage() {
     }
   };
 
-  const handleSendCoffeeInvite = async () => {
-    if (!matchModal || !profileId) return;
-    const matchedProfileId =
-      matchModal.profile_id_a === profileId
-        ? matchModal.profile_id_b
-        : matchModal.profile_id_a;
+  const openConnect = (profile: Profile, conversationStarter?: string) => {
+    setConnectTarget(profile);
+    setMessage(conversationStarter ?? "");
+    setSendError(null);
+  };
+
+  const handleSend = async () => {
+    if (!profileId || !connectTarget || !message.trim()) return;
+    setSending(true);
+    setSendError(null);
     try {
-      await api.notifications.sendCoffeeInvite({
+      await api.connections.send({
         from_profile_id: profileId,
-        to_profile_id: matchedProfileId,
-        message: "Let's grab a coffee!",
+        to_profile_id: connectTarget.id,
+        message: message.trim(),
       });
-      setCoffeeInviteSent(true);
-    } catch {
-      // silently ignore
+      setSentTo((prev) => new Set(Array.from(prev).concat(connectTarget.id)));
+      setConnectTarget(null);
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : "Could not send request");
+    } finally {
+      setSending(false);
     }
   };
 
-  const dismissModal = () => {
-    setMatchModal(null);
-    setIndex((i) => i + 1);
-  };
-
-  const current = matches[index] ?? null;
-  const done = !loading && !current && matches.length > 0;
   const empty = !loading && matches.length === 0;
 
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-gray-950 px-4 py-10">
-      {/* Match Modal */}
-      {matchModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={dismissModal}
-          />
-          <div className="relative z-10 w-full max-w-md rounded-2xl bg-gradient-to-br from-blue-900 via-purple-900 to-blue-950 border border-blue-500/40 p-8 text-center shadow-2xl">
-            <div className="text-5xl mb-4">✨</div>
-            <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
-              It&apos;s a Match!
-            </h2>
-            <p className="text-blue-200 text-sm mb-6">
-              You and{" "}
-              <span className="font-semibold text-white">
-                {matchModal.matched_profile?.name ?? "this person"}
-              </span>{" "}
-              both liked each other.
-            </p>
-
-            {coffeeInviteSent ? (
-              <div className="rounded-xl bg-green-900/40 border border-green-600/40 p-4 mb-4 text-green-300 text-sm font-medium">
-                Coffee invite sent! Check your notifications.
+        {/* Connect modal */}
+        {connectTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setConnectTarget(null)} />
+            <div className="relative z-10 w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-6">
+              <h2 className="text-lg font-semibold text-white mb-1">Connect with {connectTarget.name}</h2>
+              <p className="text-sm text-gray-400 mb-4">
+                Your email will be shared so they can reply directly. Their email stays private.
+              </p>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder={`Hi ${connectTarget.name}, I came across your profile and think we could help each other...`}
+                rows={4}
+                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-500 outline-none focus:border-blue-500 resize-none mb-3"
+              />
+              {sendError && (
+                <p className="text-sm text-red-400 mb-3">{sendError}</p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConnectTarget(null)}
+                  className="flex-1 rounded-xl border border-gray-700 text-gray-300 hover:text-white py-2.5 text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSend}
+                  disabled={sending || !message.trim()}
+                  className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white py-2.5 text-sm font-semibold transition-colors"
+                >
+                  {sending ? "Sending..." : "Send Request"}
+                </button>
               </div>
-            ) : (
+            </div>
+          </div>
+        )}
+
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mt-8 mb-2">
+            <div>
+              <h1 className="text-3xl font-bold text-white">Matches</h1>
+              <p className="text-gray-400 text-sm mt-1">
+                Curated connections based on complementary goals and skills.
+              </p>
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-300 text-sm font-medium border border-gray-700 transition-colors"
+            >
+              {refreshing ? <><Spinner />Finding...</> : "Refresh"}
+            </button>
+          </div>
+
+          {error && (
+            <div className="rounded-xl bg-red-900/30 border border-red-700 text-red-300 px-5 py-4 text-sm mt-4 mb-6">
+              {error}
+            </div>
+          )}
+
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <Spinner />
+              <p className="text-gray-500 text-sm">Loading matches...</p>
+            </div>
+          )}
+
+          {empty && (
+            <div className="text-center py-24">
+              <p className="text-lg text-gray-400 mb-2">No matches yet</p>
+              <p className="text-sm text-gray-600 mb-6">Find people who complement your goals and skills.</p>
               <button
-                onClick={handleSendCoffeeInvite}
-                className="w-full rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-white font-bold py-3 px-6 mb-3 transition-all active:scale-95"
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold transition-colors"
               >
-                Send Coffee Invite
+                {refreshing ? <><Spinner /> Finding matches...</> : "Find Matches"}
               </button>
-            )}
+            </div>
+          )}
 
-            <button
-              onClick={dismissModal}
-              className="w-full rounded-xl border border-gray-600 text-gray-300 hover:text-white hover:border-gray-400 font-medium py-3 px-6 transition-colors"
-            >
-              Keep Browsing
-            </button>
-          </div>
+          {!loading && matches.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+              {matches.map((match) => {
+                const profile = match.matched_profile;
+                if (!profile) return null;
+                const requested = sentTo.has(profile.id);
+                return (
+                  <ProfileCard
+                    key={match.id}
+                    profile={profile}
+                    match={match}
+                    requested={requested}
+                    onConnect={() => openConnect(profile, match.conversation_starter || undefined)}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
-
-      <div className="max-w-lg mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2 mt-8">Matches</h1>
-        <p className="text-gray-400 text-sm mb-8">
-          Curated connections based on complementary goals and skills.
-        </p>
-
-        {error && (
-          <div className="rounded-xl bg-red-900/30 border border-red-700 text-red-300 px-5 py-4 text-sm mb-6">
-            {error}
-          </div>
-        )}
-
-        {loading && (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <Spinner />
-            <p className="text-gray-500 text-sm">Loading matches...</p>
-          </div>
-        )}
-
-        {empty && (
-          <div className="text-center py-24">
-            <p className="text-lg text-gray-400 mb-2">No matches yet</p>
-            <p className="text-sm text-gray-600 mb-6">Find people who complement your goals and skills.</p>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold transition-colors"
-            >
-              {refreshing ? <><Spinner /> Finding matches...</> : "Find Matches"}
-            </button>
-          </div>
-        )}
-
-        {done && (
-          <div className="text-center py-24">
-            <p className="text-lg text-gray-400 mb-2">You&apos;ve seen everyone</p>
-            <p className="text-sm text-gray-600 mb-6">Check back later or refresh to find new connections.</p>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold transition-colors"
-            >
-              {refreshing ? <><Spinner /> Finding matches...</> : "Refresh Matches"}
-            </button>
-          </div>
-        )}
-
-        {current && (
-          <MatchCard
-            match={current}
-            onSwipe={handleSwipe}
-          />
-        )}
-      </div>
-    </main>
+      </main>
     </>
   );
 }
 
-function MatchCard({
+function ProfileCard({
+  profile,
   match,
-  onSwipe,
+  requested,
+  onConnect,
 }: {
+  profile: Profile;
   match: Match;
-  onSwipe: (direction: "left" | "right") => void;
+  requested: boolean;
+  onConnect: () => void;
 }) {
-  const [swiping, setSwiping] = useState(false);
-  const [dragX, setDragX] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const dragStart = useRef<number | null>(null);
-
-  const profile = match.matched_profile;
-  const THRESHOLD = 80;
-
-  const typeLabels: Record<string, string> = {
-    job_seeker: "Job Seeker",
-    employer: "Employer",
-    mentor: "Mentor",
-    mentee: "Mentee",
-  };
-
-  const handleSwipeAction = async (direction: "left" | "right") => {
-    if (swiping) return;
-    setSwiping(true);
-    await onSwipe(direction);
-    setSwiping(false);
-  };
-
-  const onDragStart = (clientX: number) => {
-    dragStart.current = clientX;
-    setDragging(true);
-  };
-
-  const onDragMove = (clientX: number) => {
-    if (dragStart.current === null || !dragging) return;
-    setDragX(clientX - dragStart.current);
-  };
-
-  const onDragEnd = () => {
-    if (dragStart.current === null) return;
-    const dx = dragX;
-    setDragging(false);
-    setDragX(0);
-    dragStart.current = null;
-    if (Math.abs(dx) >= THRESHOLD) {
-      handleSwipeAction(dx > 0 ? "right" : "left");
-    }
-  };
-
-  const onMouseDown = (e: React.MouseEvent) => onDragStart(e.clientX);
-  const onMouseMove = (e: React.MouseEvent) => { if (dragging) onDragMove(e.clientX); };
-  const onMouseUp = () => onDragEnd();
-  const onMouseLeave = () => { if (dragging) onDragEnd(); };
-  const onTouchStart = (e: React.TouchEvent) => onDragStart(e.touches[0].clientX);
-  const onTouchMove = (e: React.TouchEvent) => onDragMove(e.touches[0].clientX);
-  const onTouchEnd = () => onDragEnd();
-
-  const rotation = dragX * 0.06;
-  const likeOpacity = Math.min(Math.max(dragX / THRESHOLD, 0), 1);
-  const passOpacity = Math.min(Math.max(-dragX / THRESHOLD, 0), 1);
-
-  const cardStyle = dragging
-    ? { transform: `translateX(${dragX}px) rotate(${rotation}deg)`, transition: "none", cursor: "grabbing" }
-    : { transition: "transform 0.3s ease", cursor: "grab" };
-
   return (
-    <div className="relative select-none">
-      <div
-        className="absolute inset-0 rounded-2xl flex items-center justify-center z-10 pointer-events-none"
-        style={{ opacity: likeOpacity, background: "rgba(34,197,94,0.15)", border: "2px solid rgba(34,197,94,0.5)" }}
-      >
-        <span className="text-green-400 text-2xl font-black tracking-widest rotate-[-15deg] border-4 border-green-400 rounded-lg px-3 py-1">LIKE</span>
-      </div>
-      <div
-        className="absolute inset-0 rounded-2xl flex items-center justify-center z-10 pointer-events-none"
-        style={{ opacity: passOpacity, background: "rgba(239,68,68,0.15)", border: "2px solid rgba(239,68,68,0.5)" }}
-      >
-        <span className="text-red-400 text-2xl font-black tracking-widest rotate-[15deg] border-4 border-red-400 rounded-lg px-3 py-1">PASS</span>
-      </div>
-
-      <div
-        style={cardStyle}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={onMouseUp}
-        onMouseLeave={onMouseLeave}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        className="bg-gray-900 border border-gray-800 rounded-2xl p-6"
-      >
-        <div className="flex items-center gap-4 mb-5">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
-            {profile?.name?.charAt(0).toUpperCase() ?? "?"}
-          </div>
-          <div>
-            <div className="font-semibold text-white text-lg">{profile?.name ?? "Unknown"}</div>
-            <div className="text-sm text-gray-400">{profile?.title ?? ""}</div>
-            {profile?.profile_type && (
-              <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 text-xs border border-gray-700">
-                {typeLabels[profile.profile_type] ?? profile.profile_type}
+    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-4">
+      <div className="flex items-start gap-3">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
+          {profile.name.charAt(0).toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <div className="font-semibold text-white">{profile.name}</div>
+          <div className="text-sm text-gray-400 truncate">{profile.title}</div>
+          <div className="flex gap-1.5 mt-1 flex-wrap">
+            <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_STYLES[profile.profile_type] ?? "bg-gray-500/10 text-gray-400 border-gray-500/25"}`}>
+              {TYPE_LABELS[profile.profile_type] ?? profile.profile_type}
+            </span>
+            {profile.secondary_role && (
+              <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_STYLES[profile.secondary_role] ?? "bg-gray-500/10 text-gray-400 border-gray-500/25"}`}>
+                {TYPE_LABELS[profile.secondary_role] ?? profile.secondary_role}
               </span>
             )}
           </div>
         </div>
-
-        {profile?.location && (
-          <p className="text-xs text-gray-500 mb-4">{profile.location}</p>
-        )}
-
-        {profile?.bio && (
-          <p className="text-sm text-gray-300 leading-relaxed mb-4">{profile.bio}</p>
-        )}
-
-        {profile?.skills && profile.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {profile.skills.map((skill) => (
-              <span
-                key={skill}
-                className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 text-xs border border-gray-700"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {profile?.looking_for && (
-          <div className="rounded-lg bg-gray-800/50 border border-gray-700/50 px-4 py-3 mb-6">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Looking for</p>
-            <p className="text-sm text-gray-300">{profile.looking_for}</p>
-          </div>
-        )}
-
-        <div
-          className="flex gap-3"
-          onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={() => handleSwipeAction("left")}
-            disabled={swiping}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-900/30 border border-red-700/40 text-red-400 hover:bg-red-800/50 hover:border-red-500 hover:text-red-300 active:scale-95 transition-all disabled:opacity-40 font-medium"
-          >
-            <XIcon /> Pass
-          </button>
-          <button
-            onClick={() => handleSwipeAction("right")}
-            disabled={swiping}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-green-900/30 border border-green-700/40 text-green-400 hover:bg-green-800/50 hover:border-green-500 hover:text-green-300 active:scale-95 transition-all disabled:opacity-40 font-medium"
-          >
-            <HeartIcon /> Like
-          </button>
-        </div>
       </div>
+
+      {profile.location && (
+        <p className="text-xs text-gray-500">{profile.location}</p>
+      )}
+
+      {profile.bio && (
+        <p className="text-sm text-gray-300 leading-relaxed line-clamp-3">{profile.bio}</p>
+      )}
+
+      {profile.skills.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {profile.skills.slice(0, 6).map((skill) => (
+            <span key={skill} className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 text-xs border border-gray-700">
+              {skill}
+            </span>
+          ))}
+          {profile.skills.length > 6 && (
+            <span className="text-xs text-gray-600 self-center">+{profile.skills.length - 6}</span>
+          )}
+        </div>
+      )}
+
+      {profile.looking_for && (
+        <div className="rounded-lg bg-gray-800/50 border border-gray-700/50 px-3 py-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Looking for</p>
+          <p className="text-sm text-gray-300 line-clamp-2">{profile.looking_for}</p>
+        </div>
+      )}
+
+      {match.analysis && (
+        <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 px-3 py-2">
+          <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-0.5">Why this match</p>
+          <p className="text-sm text-gray-300">{match.analysis}</p>
+        </div>
+      )}
+
+      {match.compatibility_score > 0 && (
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 rounded-full bg-gray-800">
+            <div
+              className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+              style={{ width: `${match.compatibility_score}%` }}
+            />
+          </div>
+          <span className="text-xs text-gray-500">{match.compatibility_score}% match</span>
+        </div>
+      )}
+
+      <button
+        onClick={onConnect}
+        disabled={requested}
+        className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${
+          requested
+            ? "bg-gray-800 text-gray-500 border border-gray-700 cursor-default"
+            : "bg-blue-600 hover:bg-blue-500 text-white"
+        }`}
+      >
+        {requested ? "Request Sent" : "Connect"}
+      </button>
     </div>
-  );
-}
-
-function XIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-}
-
-function HeartIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
   );
 }
 
 function Spinner() {
   return (
-    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>

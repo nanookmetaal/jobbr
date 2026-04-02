@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import init_db
-from app.routers import admin, agents, auth, notifications, profiles, swipes
+from app.routers import admin, agents, auth, connections, notifications, profiles, swipes
 
 
 @asynccontextmanager
@@ -28,6 +28,7 @@ app.include_router(admin.router)
 app.include_router(auth.router)
 app.include_router(profiles.router)
 app.include_router(agents.router)
+app.include_router(connections.router)
 app.include_router(swipes.router)
 app.include_router(notifications.router)
 

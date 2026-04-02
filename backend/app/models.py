@@ -168,6 +168,28 @@ class WaitlistEntry(Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class ConnectionRequest(Base):
+    __tablename__ = "connection_requests"
+    __table_args__ = (UniqueConstraint("from_profile_id", "to_profile_id", name="uq_connection_request"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    from_profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
+    )
+    to_profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
+    )
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    from_profile: Mapped["Profile"] = relationship("Profile", foreign_keys=[from_profile_id])
+    to_profile: Mapped["Profile"] = relationship("Profile", foreign_keys=[to_profile_id])
+
+
 class MagicLinkToken(Base):
     __tablename__ = "magic_link_tokens"
     __table_args__ = (Index("ix_magic_link_tokens_token", "token"),)
