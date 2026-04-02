@@ -63,6 +63,8 @@ async def run_analysis(
         "looking_for": profile.looking_for,
         "work_history": profile.work_history,
         "education": profile.education,
+        "linkedin_url": profile.linkedin_url,
+        "website_url": profile.website_url,
     }
 
     results = await analyze_profile(profile_dict)
