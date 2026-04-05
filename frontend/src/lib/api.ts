@@ -55,19 +55,8 @@ export interface Match {
   profile_id_a: string;
   profile_id_b: string;
   compatibility_score: number;
-  analysis: string;
-  conversation_starter: string;
   created_at: string;
   matched_profile: Profile | null;
-}
-
-export interface Swipe {
-  id: string;
-  swiper_id: string;
-  swiped_id: string;
-  direction: "left" | "right";
-  created_at: string;
-  is_mutual: boolean;
 }
 
 export interface Notification {
@@ -125,6 +114,11 @@ export const api = {
       request<{ token: string; email: string; profile_id: string | null; is_admin: boolean }>(
         `/auth/verify?token=${encodeURIComponent(token)}`
       ),
+    changeEmail: (newEmail: string) =>
+      request<{ message: string }>("/auth/change-email", {
+        method: "POST",
+        body: JSON.stringify({ new_email: newEmail }),
+      }),
   },
   profiles: {
     create: (data: ProfileCreate) =>
@@ -184,12 +178,6 @@ export const api = {
         method: "POST",
         body: JSON.stringify({ profile_id_a: profileIdA, profile_id_b: profileIdB }),
       }),
-  },
-
-  swipes: {
-    create: (data: { swiper_id: string; swiped_id: string; direction: "left" | "right" }) =>
-      request<Swipe>("/swipes", { method: "POST", body: JSON.stringify(data) }),
-    list: (profileId: string) => request<Swipe[]>(`/swipes/${profileId}`),
   },
 
   notifications: {

@@ -74,9 +74,9 @@ export default function MatchesPage() {
     }
   };
 
-  const openConnect = (profile: Profile, conversationStarter?: string) => {
+  const openConnect = (profile: Profile) => {
     setConnectTarget(profile);
-    setMessage(conversationStarter ?? "");
+    setMessage("");
     setSendError(null);
   };
 
@@ -199,7 +199,7 @@ export default function MatchesPage() {
                     profile={profile}
                     match={match}
                     requested={requested}
-                    onConnect={() => openConnect(profile, match.conversation_starter || undefined)}
+                    onConnect={() => openConnect(profile)}
                   />
                 );
               })}
@@ -269,13 +269,6 @@ function ProfileCard({
         <div className="rounded-lg bg-gray-800/50 border border-gray-700/50 px-3 py-2">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Looking for</p>
           <p className="text-sm text-gray-300 line-clamp-2">{profile.looking_for}</p>
-        </div>
-      )}
-
-      {match.analysis && (
-        <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 px-3 py-2">
-          <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-0.5">Why this match</p>
-          <p className="text-sm text-gray-300">{match.analysis}</p>
         </div>
       )}
 

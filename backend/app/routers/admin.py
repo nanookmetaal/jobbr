@@ -137,7 +137,7 @@ async def get_suggested_introductions(
             suggestions.append({
                 "profile_a": ProfileResponse.model_validate(p1).model_dump(),
                 "profile_b": ProfileResponse.model_validate(p2).model_dump(),
-                "score": round(score, 3),
+                "score": round(float(score), 3),
             })
 
     suggestions.sort(key=lambda x: x["score"], reverse=True)

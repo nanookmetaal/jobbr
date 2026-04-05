@@ -17,11 +17,16 @@ function VerifyContent() {
       return;
     }
 
+    const previousEmail = typeof window !== "undefined" ? localStorage.getItem("auth_email") : null;
+
     api.auth.verify(token)
       .then(({ token: sessionToken, email, profile_id, is_admin }) => {
+        const isEmailChange = previousEmail && previousEmail !== email;
         setSession(sessionToken, email, profile_id, !!is_admin);
         if (is_admin) {
           router.replace("/admin");
+        } else if (isEmailChange) {
+          router.replace("/profile/edit?email_changed=1");
         } else if (profile_id) {
           router.replace(`/dashboard?profile_id=${profile_id}`);
         } else {

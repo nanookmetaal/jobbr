@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { clearSession, isAdminSession, getAuthEmail } from "@/lib/auth";
@@ -7,8 +8,13 @@ import { clearSession, isAdminSession, getAuthEmail } from "@/lib/auth";
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const isAdmin = isAdminSession();
-  const email = getAuthEmail();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsAdmin(isAdminSession());
+    setEmail(getAuthEmail());
+  }, []);
 
   const handleSignOut = () => {
     clearSession();

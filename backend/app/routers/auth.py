@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
+from app.dependencies import get_current_email
 from app.models import Admin, MagicLinkToken, Profile, WaitlistEntry
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -25,6 +26,10 @@ class MagicLinkRequest(BaseModel):
     email: str
     first_name: str | None = None
     last_name: str | None = None
+
+
+class ChangeEmailRequest(BaseModel):
+    new_email: str
 
 
 @router.post("/magic-link")
@@ -108,6 +113,55 @@ async def request_magic_link(body: MagicLinkRequest, db: AsyncSession = Depends(
     return {"message": "Magic link sent"}
 
 
+@router.post("/change-email")
+async def request_email_change(
+    body: ChangeEmailRequest,
+    current_email: str = Depends(get_current_email),
+    db: AsyncSession = Depends(get_db),
+):
+    current_email = current_email.lower().strip()
+    new_email = body.new_email.lower().strip()
+
+    if current_email == new_email:
+        raise HTTPException(status_code=400, detail="New email is the same as current email")
+
+    admin_check = await db.execute(select(Admin).where(Admin.email == current_email))
+    if admin_check.scalar_one_or_none():
+        raise HTTPException(status_code=403, detail="Admin account emails cannot be changed here - update the admins table directly")
+
+    profile_result = await db.execute(select(Profile).where(Profile.email == current_email))
+    profile = profile_result.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    taken = await db.execute(select(Profile).where(Profile.email == new_email))
+    if taken.scalar_one_or_none():
+        # Silently succeed - don't reveal whether the address is registered
+        return {"message": "If that address is available, a verification email has been sent."}
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+    db.add(MagicLinkToken(email=current_email, token=token, expires_at=expires_at, pending_email=new_email))
+    await db.commit()
+
+    verify_url = f"{settings.FRONTEND_URL}/auth/verify?token={token}"
+    try:
+        _send_email(
+            to=new_email,
+            subject="Confirm your new Jobbr email address",
+            html=(
+                f"<p>Click below to confirm <strong>{new_email}</strong> as your new Jobbr email. "
+                f"This link expires in 15 minutes.</p>"
+                f'<p><a href="{verify_url}">Confirm new email</a></p>'
+                f"<p>If you didn't request this, ignore this email - your address won't change.</p>"
+            ),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Email send failed: {e}")
+
+    return {"message": "If that address is available, a verification email has been sent."}
+
+
 @router.get("/approve")
 async def approve_user(email: str, secret: str, db: AsyncSession = Depends(get_db)):
     if not settings.ADMIN_SECRET or secret != settings.ADMIN_SECRET:
@@ -164,19 +218,30 @@ async def verify_magic_link(token: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Link has expired")
 
     magic_link.used = True
+
+    # Email change flow - update profile email before issuing JWT
+    resolved_email = magic_link.email
+    if magic_link.pending_email:
+        new_email = magic_link.pending_email
+        profile_result = await db.execute(select(Profile).where(Profile.email == magic_link.email))
+        profile_to_update = profile_result.scalar_one_or_none()
+        if profile_to_update:
+            profile_to_update.email = new_email
+        resolved_email = new_email
+
     await db.commit()
 
     profile_result = await db.execute(
-        select(Profile).where(Profile.email == magic_link.email)
+        select(Profile).where(Profile.email == resolved_email)
     )
     profile = profile_result.scalar_one_or_none()
 
-    admin_check = await db.execute(select(Admin).where(Admin.email == magic_link.email))
+    admin_check = await db.execute(select(Admin).where(Admin.email == resolved_email))
     user_is_admin = admin_check.scalar_one_or_none() is not None
 
     session_token = jwt.encode(
         {
-            "email": magic_link.email,
+            "email": resolved_email,
             "is_admin": user_is_admin,
             "exp": datetime.now(timezone.utc) + timedelta(days=30),
         },
@@ -186,7 +251,7 @@ async def verify_magic_link(token: str, db: AsyncSession = Depends(get_db)):
 
     return {
         "token": session_token,
-        "email": magic_link.email,
+        "email": resolved_email,
         "is_admin": user_is_admin,
         "profile_id": str(profile.id) if profile else None,
     }

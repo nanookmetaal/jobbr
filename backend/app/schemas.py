@@ -84,8 +84,6 @@ class MatchResponse(BaseModel):
     profile_id_a: uuid.UUID
     profile_id_b: uuid.UUID
     compatibility_score: int
-    analysis: str
-    conversation_starter: str
     created_at: datetime
     matched_profile: ProfileResponse | None = None
 
@@ -100,21 +98,6 @@ class FindMatchesRequest(BaseModel):
     profile_id: uuid.UUID
 
 
-class SwipeCreate(BaseModel):
-    swiper_id: uuid.UUID
-    swiped_id: uuid.UUID
-    direction: Literal["left", "right"]
-
-
-class SwipeResponse(BaseModel):
-    id: uuid.UUID
-    swiper_id: uuid.UUID
-    swiped_id: uuid.UUID
-    direction: str
-    created_at: datetime
-    is_mutual: bool = False
-
-    model_config = {"from_attributes": True}
 
 
 class NotificationResponse(BaseModel):

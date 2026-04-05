@@ -57,12 +57,6 @@ class Profile(Base):
     matches_as_b: Mapped[list["Match"]] = relationship(
         "Match", foreign_keys="Match.profile_id_b", back_populates="profile_b", passive_deletes=True
     )
-    swipes_given: Mapped[list["Swipe"]] = relationship(
-        "Swipe", foreign_keys="Swipe.swiper_id", back_populates="swiper", passive_deletes=True
-    )
-    swipes_received: Mapped[list["Swipe"]] = relationship(
-        "Swipe", foreign_keys="Swipe.swiped_id", back_populates="swiped", passive_deletes=True
-    )
     notifications: Mapped[list["Notification"]] = relationship(
         "Notification", foreign_keys="Notification.profile_id", back_populates="profile", passive_deletes=True
     )
@@ -99,8 +93,6 @@ class Match(Base):
         UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
     )
     compatibility_score: Mapped[int] = mapped_column(Integer, nullable=False)
-    analysis: Mapped[str] = mapped_column(Text, nullable=False)
-    conversation_starter: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -110,32 +102,6 @@ class Match(Base):
     )
     profile_b: Mapped["Profile"] = relationship(
         "Profile", foreign_keys=[profile_id_b], back_populates="matches_as_b"
-    )
-
-
-class Swipe(Base):
-    __tablename__ = "swipes"
-    __table_args__ = (UniqueConstraint("swiper_id", "swiped_id", name="uq_swipe_pair"),)
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
-    swiper_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
-    )
-    swiped_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
-    )
-    direction: Mapped[str] = mapped_column(String, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-
-    swiper: Mapped["Profile"] = relationship(
-        "Profile", foreign_keys=[swiper_id], back_populates="swipes_given"
-    )
-    swiped: Mapped["Profile"] = relationship(
-        "Profile", foreign_keys=[swiped_id], back_populates="swipes_received"
     )
 
 
@@ -201,6 +167,7 @@ class MagicLinkToken(Base):
     token: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     used: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    pending_email: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

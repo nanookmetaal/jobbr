@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.llm import analyze_profile, rank_matches
 from app.database import get_db
 from app.dependencies import get_current_email
-from app.models import AgentAnalysis, Match, Profile, Swipe
+from app.models import AgentAnalysis, Match, Profile
 from app.schemas import (
     AgentAnalysisResponse,
     FindMatchesRequest,
@@ -15,6 +15,7 @@ from app.schemas import (
     ProfileResponse,
     RunAgentsRequest,
 )
+
 
 
 router = APIRouter(prefix="/agents", tags=["agents"])
@@ -52,7 +53,6 @@ async def run_analysis(
     profile_dict = {
         "id": str(profile.id),
         "name": profile.name,
-        "email": profile.email,
         "profile_type": profile.profile_type,
         "secondary_role": profile.secondary_role,
         "title": profile.title,
@@ -67,7 +67,16 @@ async def run_analysis(
         "website_url": profile.website_url,
     }
 
-    results = await analyze_profile(profile_dict)
+    # Fetch previous analysis to give the coach context on what was already addressed
+    prev_result = await db.execute(
+        select(AgentAnalysis)
+        .where(AgentAnalysis.profile_id == profile.id)
+        .order_by(AgentAnalysis.created_at.desc())
+        .limit(2)
+    )
+    prev_analyses = {a.agent_type: a.result for a in prev_result.scalars().all()}
+
+    results = await analyze_profile(profile_dict, previous_analyses=prev_analyses)
 
     saved = []
     for agent_type, result in results.items():
@@ -88,12 +97,6 @@ async def run_analysis(
 
 @router.get("/matches/{profile_id}", response_model=list[MatchResponse])
 async def get_matches(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
-    """Return saved matches that the user hasn't swiped on yet."""
-    swiped_ids_result = await db.execute(
-        select(Swipe.swiped_id).where(Swipe.swiper_id == profile_id)
-    )
-    swiped_ids = {row[0] for row in swiped_ids_result.fetchall()}
-
     result = await db.execute(
         select(Match).where(
             Match.profile_id_a == profile_id,
@@ -103,8 +106,6 @@ async def get_matches(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db))
 
     response = []
     for match in matches:
-        if match.profile_id_b in swiped_ids:
-            continue
         candidate = await db.get(Profile, match.profile_id_b)
         if not candidate:
             continue
@@ -114,8 +115,6 @@ async def get_matches(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db))
                 profile_id_a=match.profile_id_a,
                 profile_id_b=match.profile_id_b,
                 compatibility_score=match.compatibility_score,
-                analysis=match.analysis,
-                conversation_starter=match.conversation_starter,
                 created_at=match.created_at,
                 matched_profile=ProfileResponse.model_validate(candidate),
             )
@@ -217,8 +216,6 @@ async def run_matches(
             profile_id_a=profile.id,
             profile_id_b=candidate.id,
             compatibility_score=int(ranking.get("compatibility_score", 0)),
-            analysis=ranking.get("analysis", ""),
-            conversation_starter=ranking.get("conversation_starter", ""),
         )
         db.add(match)
         saved_matches.append((match, candidate))
@@ -234,8 +231,6 @@ async def run_matches(
                 profile_id_a=match.profile_id_a,
                 profile_id_b=match.profile_id_b,
                 compatibility_score=match.compatibility_score,
-                analysis=match.analysis,
-                conversation_starter=match.conversation_starter,
                 created_at=match.created_at,
                 matched_profile=ProfileResponse.model_validate(candidate),
             )

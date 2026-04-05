@@ -289,6 +289,9 @@ export default function CreateProfilePage() {
                   rows={4} className="input resize-none" />
               </Field>
               <Field label="What are you looking for?" hint="Be specific - this drives your matches">
+                {(form.profile_type === "employer" || form.profile_type === "mentor") && (
+                  <p className="text-xs text-amber-400 mb-2">This text is shown to job seekers and mentees when they view your profile as a potential match.</p>
+                )}
                 <textarea value={form.looking_for} onChange={(e) => update("looking_for", e.target.value)}
                   placeholder="Describe your ideal role, hire, or mentorship arrangement..."
                   rows={4} className="input resize-none" />

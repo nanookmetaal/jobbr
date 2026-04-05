@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [introductions, setIntroductions] = useState<SuggestedIntroduction[]>([]);
   const [introLoading, setIntroLoading] = useState(false);
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
   const [sent, setSent] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -59,6 +60,7 @@ export default function AdminPage() {
 
   const loadIntroductions = async () => {
     setIntroLoading(true);
+    setSelectedPersonId(null);
     try {
       const data = await api.admin.suggestedIntroductions();
       setIntroductions(data);
@@ -190,7 +192,9 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-gray-500">
-                Top unconnected pairs ranked by compatibility. Send an introduction to email both parties.
+                {selectedPersonId
+                  ? "Top matches for this person. Send an introduction to email both parties."
+                  : "Select a person to see their top unconnected matches."}
               </p>
               <button onClick={loadIntroductions} disabled={introLoading}
                 className="text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors">
@@ -205,47 +209,86 @@ export default function AdminPage() {
             {!introLoading && introductions.length === 0 && (
               <p className="text-gray-500 text-sm">No suggestions available. Profiles may be missing embeddings.</p>
             )}
-            <div className="space-y-3">
-              {introductions.map((intro, i) => {
-                const key = [intro.profile_a.id, intro.profile_b.id].sort().join("-");
-                const isSent = sent.has(key);
-                const isSending = sending === key;
-                return (
-                  <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1 grid grid-cols-2 gap-4">
-                        {[intro.profile_a, intro.profile_b].map((p) => (
-                          <div key={p.id}>
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-white text-sm">{p.name}</span>
-                              <span className={`text-xs px-1.5 py-0.5 rounded-full border ${typeStyle(p.profile_type)}`}>
-                                {p.profile_type.replace("_", " ")}
+            {!introLoading && introductions.length > 0 && (() => {
+              // Build unique people from all pairs
+              const peopleMap = new Map<string, Profile>();
+              introductions.forEach(({ profile_a, profile_b }) => {
+                peopleMap.set(profile_a.id, profile_a);
+                peopleMap.set(profile_b.id, profile_b);
+              });
+              const people = Array.from(peopleMap.values());
+
+              const selectedMatches = selectedPersonId
+                ? introductions.filter(
+                    (i) => i.profile_a.id === selectedPersonId || i.profile_b.id === selectedPersonId
+                  )
+                : [];
+
+              return (
+                <div className="flex gap-4">
+                  {/* People list */}
+                  <div className="w-56 flex-shrink-0 space-y-1">
+                    {people.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedPersonId(p.id === selectedPersonId ? null : p.id)}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
+                          selectedPersonId === p.id
+                            ? "bg-blue-600 text-white"
+                            : "bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-200"
+                        }`}
+                      >
+                        <p className="text-sm font-medium truncate">{p.name}</p>
+                        <p className={`text-xs mt-0.5 truncate ${selectedPersonId === p.id ? "text-blue-200" : "text-gray-500"}`}>
+                          {p.profile_type.replace("_", " ")}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Match list */}
+                  <div className="flex-1 space-y-3">
+                    {!selectedPersonId && (
+                      <p className="text-gray-600 text-sm pt-2">Select a person on the left.</p>
+                    )}
+                    {selectedMatches.map((intro, i) => {
+                      const other = intro.profile_a.id === selectedPersonId ? intro.profile_b : intro.profile_a;
+                      const key = [intro.profile_a.id, intro.profile_b.id].sort().join("-");
+                      const isSent = sent.has(key);
+                      const isSending = sending === key;
+                      return (
+                        <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="font-medium text-white text-sm">{other.name}</span>
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full border ${typeStyle(other.profile_type)}`}>
+                                {other.profile_type.replace("_", " ")}
                               </span>
                             </div>
-                            <p className="text-xs text-gray-400">{p.title}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{p.location}</p>
+                            <p className="text-xs text-gray-400">{other.title}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{other.location}</p>
                           </div>
-                        ))}
-                      </div>
-                      <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                        <span className="text-xs text-gray-600">Score: {intro.score}</span>
-                        <button
-                          onClick={() => handleSendIntroduction(intro.profile_a.id, intro.profile_b.id)}
-                          disabled={isSent || isSending}
-                          className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                            isSent
-                              ? "bg-green-500/15 text-green-400 border border-green-500/25 cursor-default"
-                              : "bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white"
-                          }`}
-                        >
-                          {isSent ? "Sent" : isSending ? "Sending..." : "Introduce"}
-                        </button>
-                      </div>
-                    </div>
+                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                            <span className="text-xs text-gray-600">Score: {intro.score}</span>
+                            <button
+                              onClick={() => handleSendIntroduction(intro.profile_a.id, intro.profile_b.id)}
+                              disabled={isSent || isSending}
+                              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                isSent
+                                  ? "bg-green-500/15 text-green-400 border border-green-500/25 cursor-default"
+                                  : "bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white"
+                              }`}
+                            >
+                              {isSent ? "Sent" : isSending ? "Sending..." : "Introduce"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 

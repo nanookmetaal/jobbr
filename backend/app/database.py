@@ -48,3 +48,6 @@ async def init_db():
         await conn.execute(text(
             "ALTER TABLE profiles ADD COLUMN IF NOT EXISTS website_url varchar"
         ))
+        await conn.execute(text(
+            "ALTER TABLE magic_link_tokens ADD COLUMN IF NOT EXISTS pending_email varchar"
+        ))

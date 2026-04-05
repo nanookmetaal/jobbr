@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ProfileType } from "@/lib/api";
-import { isAuthenticated } from "@/lib/auth";
+import { isAuthenticated, getAuthEmail } from "@/lib/auth";
 import { sanitizeLinkedInUrl, sanitizeWebsiteUrl } from "@/lib/urls";
 import Navbar from "@/components/Navbar";
 
@@ -33,11 +33,25 @@ type FormData = {
 };
 
 export default function EditProfilePage() {
+  return (
+    <Suspense>
+      <EditProfileContent />
+    </Suspense>
+  );
+}
+
+function EditProfileContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const emailChanged = searchParams.get("email_changed") === "1";
   const [form, setForm] = useState<FormData | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailChangeLoading, setEmailChangeLoading] = useState(false);
+  const [emailChangeMsg, setEmailChangeMsg] = useState<string | null>(null);
+  const [emailChangeError, setEmailChangeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -185,6 +199,12 @@ export default function EditProfilePage() {
 
         <h1 className="text-3xl font-bold text-white mb-8">Edit Profile</h1>
 
+        {emailChanged && (
+          <div className="rounded-lg bg-green-900/30 border border-green-700 text-green-300 text-sm px-4 py-3 mb-6">
+            Email address updated successfully.
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-5">
           <Field label="Full Name">
             <input
@@ -301,6 +321,9 @@ export default function EditProfilePage() {
           </Field>
 
           <Field label="What are you looking for?">
+            {(form.profile_type === "employer" || form.profile_type === "mentor") && (
+              <p className="text-xs text-amber-400 mb-2">This text is shown to job seekers and mentees when they view your profile as a potential match.</p>
+            )}
             <textarea
               value={form.looking_for}
               onChange={(e) => update("looking_for", e.target.value)}
@@ -323,6 +346,46 @@ export default function EditProfilePage() {
             {loading ? <><Spinner /> Saving...</> : "Save Changes"}
           </button>
         </form>
+
+        {/* Change email */}
+        <div className="mt-8 pt-8 border-t border-gray-800">
+          <h2 className="text-base font-semibold text-white mb-1">Change email address</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Current: <span className="text-gray-300">{getAuthEmail()}</span>
+          </p>
+          <div className="flex gap-3">
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => { setNewEmail(e.target.value); setEmailChangeMsg(null); setEmailChangeError(null); }}
+              placeholder="New email address"
+              className="input flex-1"
+            />
+            <button
+              type="button"
+              disabled={emailChangeLoading || !newEmail.trim()}
+              onClick={async () => {
+                setEmailChangeLoading(true);
+                setEmailChangeMsg(null);
+                setEmailChangeError(null);
+                try {
+                  await api.auth.changeEmail(newEmail.trim());
+                  setEmailChangeMsg("If that address is available, a verification link has been sent to it.");
+                  setNewEmail("");
+                } catch (e) {
+                  setEmailChangeError(e instanceof Error ? e.message : "Failed to send verification email.");
+                } finally {
+                  setEmailChangeLoading(false);
+                }
+              }}
+              className="px-4 py-2 rounded-xl bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-sm font-medium text-white transition-colors whitespace-nowrap"
+            >
+              {emailChangeLoading ? "Sending..." : "Send verification"}
+            </button>
+          </div>
+          {emailChangeMsg && <p className="text-sm text-green-400 mt-2">{emailChangeMsg}</p>}
+          {emailChangeError && <p className="text-sm text-red-400 mt-2">{emailChangeError}</p>}
+        </div>
       </div>
 
       <style jsx global>{`

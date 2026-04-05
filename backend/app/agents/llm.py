@@ -41,33 +41,52 @@ async def _call(model: ChatAnthropic, system: str, human: str) -> str:
     return response.content
 
 
-async def analyze_profile(profile: dict) -> dict[str, Any]:
+async def analyze_profile(profile: dict, previous_analyses: Optional[dict] = None) -> dict[str, Any]:
     profile_str = json.dumps(profile, indent=2)
 
+    prev_gaps_str = ""
+    prev_tips_str = ""
+    if previous_analyses:
+        prev_gaps = (previous_analyses.get("profile_analyst") or {}).get("gaps", [])
+        prev_tips = (previous_analyses.get("profile_coach") or {}).get("tips", [])
+        if prev_gaps:
+            prev_gaps_str = f"\nPreviously flagged gaps: {json.dumps(prev_gaps)}"
+        if prev_tips:
+            prev_tips_str = f"\nPrevious tips given: {json.dumps(prev_tips)}"
+
     analyst_system = (
-        "You are a seasoned talent acquisition specialist with 15 years of experience "
-        "reviewing professional profiles. You have a sharp eye for gaps, vague language, "
-        "and missing details that reduce a profile's effectiveness. "
-        "Your role is to review profiles for completeness, clarity, and missing information."
+        "You are a seasoned talent acquisition specialist reviewing professional profiles. "
+        "Be honest and calibrated: if a profile is strong, say so with a high score and few gaps. "
+        "Only flag genuine issues - do not manufacture criticism on a well-written profile."
     )
     analyst_human = (
         f"Analyze the following professional profile:\n\n{profile_str}\n\n"
-        "Return a JSON object with keys: 'completeness_score' (0-100), "
+        + (
+            f"This person has updated their profile based on prior feedback.{prev_gaps_str}\n"
+            "Only list a gap if it genuinely still applies. If a previously flagged issue "
+            "has been addressed, acknowledge it as a strength instead.\n\n"
+            if prev_gaps_str else ""
+        )
+        + "Return a JSON object with keys: 'completeness_score' (0-100), "
         "'strengths' (list of strings), 'gaps' (list of strings), 'summary' (string)."
     )
 
     analyst_raw = await _call(llm, analyst_system, analyst_human)
 
     coach_system = (
-        "You are an executive career coach who has helped thousands of professionals "
-        "land their dream roles. You specialize in crafting compelling narratives and "
-        "turning weak profile sections into powerful statements. Your role is to suggest "
-        "concrete rewrites and improvements to strengthen a professional profile."
+        "You are an executive career coach. Suggest concrete improvements to strengthen "
+        "a professional profile. If the profile is already strong in an area, do not "
+        "suggest changes to it - only address genuine remaining weaknesses."
     )
     coach_human = (
-        f"Given this analyst review of a profile:\n\n{analyst_raw}\n\n"
-        f"And the original profile:\n\n{profile_str}\n\n"
-        "Suggest concrete improvements. Return a JSON object with keys: "
+        f"Analyst review:\n\n{analyst_raw}\n\n"
+        f"Original profile:\n\n{profile_str}\n\n"
+        + (
+            f"Previously given tips:{prev_tips_str}\n"
+            "Do not repeat tips that have already been acted on.\n\n"
+            if prev_tips_str else ""
+        )
+        + "Return a JSON object with keys: "
         "'improved_bio' (string), 'suggested_skills' (list), "
         "'title_suggestion' (string), 'looking_for_suggestion' (string), "
         "'tips' (list of strings)."
@@ -132,18 +151,14 @@ async def rank_matches(profile: dict, candidates: list[dict]) -> list[dict]:
 
     system = (
         "You are a professional networking expert for a builders community. "
-        "Your job is to evaluate how well a set of candidates complement a given profile "
-        "and craft specific, warm introductory messages."
+        "Your job is to evaluate how well a set of candidates complement a given profile."
     )
     human = (
         f"Profile:\n{profile_str}\n\n"
         f"Candidates:\n{candidates_str}\n\n"
         "For each candidate return a JSON array where every item has exactly these keys:\n"
         "- 'id': the candidate's id (string)\n"
-        "- 'compatibility_score': integer 0-100 (how well they complement the profile)\n"
-        "- 'analysis': 1-2 sentences on why they are a good match\n"
-        "- 'conversation_starter': a short, specific opening message the profile could send "
-        "to this candidate (first person, warm but professional)\n\n"
+        "- 'compatibility_score': integer 0-100 (how well they complement the profile)\n\n"
         "Return only the JSON array, no other text."
     )
 
