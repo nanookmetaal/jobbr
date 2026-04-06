@@ -258,25 +258,31 @@ async def send_introduction(
     resend.api_key = settings.RESEND_API_KEY
 
     def intro_email(to: Profile, other: Profile) -> None:
-        custom_message_html = (
-            f"<p>{body.message}</p>"
-            if body.message and body.message.strip()
-            else ""
+        footer = (
+            f"<p style='color:#888;font-size:12px;margin-top:24px;'>"
+            f"This introduction was made by {admin_name}.</p>"
         )
+        if body.message and body.message.strip():
+            # Admin wrote the full message - send it verbatim
+            body_html = "".join(
+                f"<p>{line}</p>" for line in body.message.strip().splitlines() if line.strip()
+            ) or f"<p>{body.message.strip()}</p>"
+            html = body_html + footer
+        else:
+            # Default template
+            html = (
+                f"<p>Hi {to.name},</p>"
+                f"<p><strong>{admin_name}</strong> wanted to introduce you to "
+                f"<strong>{other.name}</strong> ({other.title}).</p>"
+                f"<p>You can reach {other.name} directly at "
+                f"<a href='mailto:{other.email}'>{other.email}</a>.</p>"
+                + footer
+            )
         resend.Emails.send({
             "from": settings.EMAIL_FROM,
             "to": [to.email],
             "subject": f"Introduction: meet {other.name} on Jobbr",
-            "html": (
-                f"<p>Hi {to.name},</p>"
-                f"<p><strong>{admin_name}</strong> wanted to introduce you to "
-                f"<strong>{other.name}</strong> ({other.title}).</p>"
-                + custom_message_html +
-                f"<p>You can reach {other.name} directly at "
-                f"<a href='mailto:{other.email}'>{other.email}</a>.</p>"
-                f"<p style='color:#888;font-size:12px;margin-top:24px;'>"
-                f"This introduction was made by {admin_name}.</p>"
-            ),
+            "html": html,
         })
 
     errors = []

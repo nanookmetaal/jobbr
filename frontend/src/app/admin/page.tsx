@@ -388,7 +388,7 @@ function AdminPageContent() {
                           {isComposing && (
                             <div className="mt-3 pt-3 border-t border-gray-800 space-y-2">
                               <textarea
-                                placeholder="Add a personal note (optional) - why you think these two should connect..."
+                                placeholder={`Optional - write the full email body (e.g. "Hi Leo and Sarah, I wanted to connect you two because..."). If left blank a default message is sent.`}
                                 value={introMessage}
                                 onChange={(e) => setIntroMessage(e.target.value)}
                                 rows={3}
