@@ -337,6 +337,7 @@ function AdminPageContent() {
                       const prevIntro = intro.previous_introduction;
                       const isSending = sending === key;
                       const isComposing = composingKey === key;
+                      const selectedProfile = intro.profile_a.id === selectedPersonId ? intro.profile_a : intro.profile_b;
                       return (
                         <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
                           <div className="flex items-center gap-4">
@@ -349,40 +350,39 @@ function AdminPageContent() {
                               </div>
                               <p className="text-xs text-gray-400">{other.title}</p>
                               <p className="text-xs text-gray-500 mt-0.5">{other.location}</p>
+                              <div className="flex gap-3 mt-1.5">
+                                <span className="text-xs text-gray-600 font-mono">{selectedProfile.email}</span>
+                                <span className="text-xs text-gray-700">·</span>
+                                <span className="text-xs text-gray-600 font-mono">{other.email}</span>
+                              </div>
                             </div>
                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
                               <span className="text-xs text-gray-600">Score: {intro.score}</span>
-                              {isSent ? (
-                                <div className="flex flex-col items-end gap-1">
-                                  <span className="px-4 py-1.5 rounded-lg text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/25">
-                                    Introduced
-                                  </span>
-                                  {prevIntro && (
-                                    <span className="text-xs text-gray-500">
-                                      by {prevIntro.introduced_by} · {new Date(prevIntro.introduced_at).toLocaleDateString()}
-                                    </span>
-                                  )}
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    if (isComposing) {
-                                      setComposingKey(null);
-                                      setIntroMessage("");
-                                    } else {
-                                      setComposingKey(key);
-                                      setIntroMessage("");
-                                    }
-                                  }}
-                                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                    isComposing
-                                      ? "bg-gray-700 text-gray-300"
-                                      : "bg-blue-600 hover:bg-blue-500 text-white"
-                                  }`}
-                                >
-                                  {isComposing ? "Cancel" : "Introduce"}
-                                </button>
+                              {isSent && prevIntro && (
+                                <span className="text-xs text-green-600">
+                                  Introduced {new Date(prevIntro.introduced_at).toLocaleDateString()}
+                                </span>
                               )}
+                              <button
+                                onClick={() => {
+                                  if (isComposing) {
+                                    setComposingKey(null);
+                                    setIntroMessage("");
+                                  } else {
+                                    setComposingKey(key);
+                                    setIntroMessage("");
+                                  }
+                                }}
+                                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                  isComposing
+                                    ? "bg-gray-700 text-gray-300"
+                                    : isSent
+                                    ? "bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300"
+                                    : "bg-blue-600 hover:bg-blue-500 text-white"
+                                }`}
+                              >
+                                {isComposing ? "Cancel" : isSent ? "Introduce again" : "Introduce"}
+                              </button>
                             </div>
                           </div>
                           {isComposing && (
