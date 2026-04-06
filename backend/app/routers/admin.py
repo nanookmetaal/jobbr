@@ -227,7 +227,7 @@ async def get_suggested_introductions(
     }
 
     for s in suggestions[:15]:
-        key = tuple(sorted([s["profile_a"]["id"], s["profile_b"]["id"]]))
+        key = tuple(sorted([str(s["profile_a"]["id"]), str(s["profile_b"]["id"])]))
         if key in past_intros:
             s["previous_introduction"] = past_intros[key]
 
