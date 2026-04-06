@@ -28,6 +28,8 @@ export default function AdminPage() {
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
   const [sent, setSent] = useState<Set<string>>(new Set());
+  const [composingKey, setComposingKey] = useState<string | null>(null);
+  const [introMessage, setIntroMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approving, setApproving] = useState<string | null>(null);
@@ -128,12 +130,14 @@ export default function AdminPage() {
     }
   };
 
-  const handleSendIntroduction = async (idA: string, idB: string) => {
+  const handleSendIntroduction = async (idA: string, idB: string, message: string) => {
     const key = [idA, idB].sort().join("-");
     setSending(key);
     try {
-      await api.admin.sendIntroduction(idA, idB);
+      await api.admin.sendIntroduction(idA, idB, message || undefined);
       setSent((prev) => new Set(Array.from(prev).concat(key)));
+      setComposingKey(null);
+      setIntroMessage("");
     } catch {
       alert("Failed to send introduction.");
     } finally {
@@ -313,32 +317,66 @@ export default function AdminPage() {
                       const key = [intro.profile_a.id, intro.profile_b.id].sort().join("-");
                       const isSent = sent.has(key);
                       const isSending = sending === key;
+                      const isComposing = composingKey === key;
                       return (
-                        <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="font-medium text-white text-sm">{other.name}</span>
-                              <span className={`text-xs px-1.5 py-0.5 rounded-full border ${typeStyle(other.profile_type)}`}>
-                                {other.profile_type.replace("_", " ")}
-                              </span>
+                        <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                          <div className="flex items-center gap-4">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="font-medium text-white text-sm">{other.name}</span>
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full border ${typeStyle(other.profile_type)}`}>
+                                  {other.profile_type.replace("_", " ")}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-400">{other.title}</p>
+                              <p className="text-xs text-gray-500 mt-0.5">{other.location}</p>
                             </div>
-                            <p className="text-xs text-gray-400">{other.title}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{other.location}</p>
+                            <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                              <span className="text-xs text-gray-600">Score: {intro.score}</span>
+                              {isSent ? (
+                                <span className="px-4 py-1.5 rounded-lg text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                                  Sent
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    if (isComposing) {
+                                      setComposingKey(null);
+                                      setIntroMessage("");
+                                    } else {
+                                      setComposingKey(key);
+                                      setIntroMessage("");
+                                    }
+                                  }}
+                                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                    isComposing
+                                      ? "bg-gray-700 text-gray-300"
+                                      : "bg-blue-600 hover:bg-blue-500 text-white"
+                                  }`}
+                                >
+                                  {isComposing ? "Cancel" : "Introduce"}
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                            <span className="text-xs text-gray-600">Score: {intro.score}</span>
-                            <button
-                              onClick={() => handleSendIntroduction(intro.profile_a.id, intro.profile_b.id)}
-                              disabled={isSent || isSending}
-                              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                                isSent
-                                  ? "bg-green-500/15 text-green-400 border border-green-500/25 cursor-default"
-                                  : "bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white"
-                              }`}
-                            >
-                              {isSent ? "Sent" : isSending ? "Sending..." : "Introduce"}
-                            </button>
-                          </div>
+                          {isComposing && (
+                            <div className="mt-3 pt-3 border-t border-gray-800 space-y-2">
+                              <textarea
+                                placeholder="Add a personal note (optional) - why you think these two should connect..."
+                                value={introMessage}
+                                onChange={(e) => setIntroMessage(e.target.value)}
+                                rows={3}
+                                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                              />
+                              <button
+                                onClick={() => handleSendIntroduction(intro.profile_a.id, intro.profile_b.id, introMessage)}
+                                disabled={isSending}
+                                className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                              >
+                                {isSending ? "Sending..." : "Send introduction"}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}

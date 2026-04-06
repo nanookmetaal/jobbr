@@ -180,10 +180,10 @@ export const api = {
       }),
     suggestedIntroductions: () =>
       request<SuggestedIntroduction[]>("/admin/suggested-introductions"),
-    sendIntroduction: (profileIdA: string, profileIdB: string) =>
+    sendIntroduction: (profileIdA: string, profileIdB: string, message?: string) =>
       request<{ message: string }>("/admin/introductions", {
         method: "POST",
-        body: JSON.stringify({ profile_id_a: profileIdA, profile_id_b: profileIdB }),
+        body: JSON.stringify({ profile_id_a: profileIdA, profile_id_b: profileIdB, message: message || null }),
       }),
   },
 

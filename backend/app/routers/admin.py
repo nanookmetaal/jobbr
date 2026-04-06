@@ -219,30 +219,48 @@ async def get_suggested_introductions(
     return suggestions[:15]
 
 
+class IntroductionRequest(BaseModel):
+    profile_id_a: str
+    profile_id_b: str
+    message: str | None = None
+
+
 @router.post("/introductions")
 async def send_introduction(
-    body: dict,
-    _: str = Depends(get_current_admin),
+    body: IntroductionRequest,
+    admin_email: str = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    profile_a = await db.get(Profile, body["profile_id_a"])
-    profile_b = await db.get(Profile, body["profile_id_b"])
+    profile_a = await db.get(Profile, body.profile_id_a)
+    profile_b = await db.get(Profile, body.profile_id_b)
     if not profile_a or not profile_b:
         raise HTTPException(status_code=404, detail="Profile not found")
+
+    admin_result = await db.execute(select(Admin).where(Admin.email == admin_email))
+    admin = admin_result.scalar_one_or_none()
+    admin_name = admin.name if admin else "the Jobbr community organizer"
 
     resend.api_key = settings.RESEND_API_KEY
 
     def intro_email(to: Profile, other: Profile) -> None:
+        custom_message_html = (
+            f"<p>{body.message}</p>"
+            if body.message and body.message.strip()
+            else ""
+        )
         resend.Emails.send({
             "from": settings.EMAIL_FROM,
             "to": [to.email],
             "subject": f"Introduction: meet {other.name} on Jobbr",
             "html": (
                 f"<p>Hi {to.name},</p>"
-                f"<p>We think you and <strong>{other.name}</strong> ({other.title}) would be a great connection.</p>"
-                f"<p>Feel free to reach out to {other.name} directly at "
+                f"<p><strong>{admin_name}</strong> wanted to introduce you to "
+                f"<strong>{other.name}</strong> ({other.title}).</p>"
+                + custom_message_html +
+                f"<p>You can reach {other.name} directly at "
                 f"<a href='mailto:{other.email}'>{other.email}</a>.</p>"
-                f"<p style='color:#888;font-size:12px;margin-top:24px;'>This introduction was made by the Jobbr community organizer.</p>"
+                f"<p style='color:#888;font-size:12px;margin-top:24px;'>"
+                f"This introduction was made by {admin_name}.</p>"
             ),
         })
 
