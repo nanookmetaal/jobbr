@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api, Profile, SuggestedIntroduction } from "@/lib/api";
 import { isAuthenticated, isAdminSession } from "@/lib/auth";
 import Navbar from "@/components/Navbar";
@@ -19,8 +19,18 @@ type WaitlistEntry = {
 type Tab = "profiles" | "waitlist" | "introductions";
 
 export default function AdminPage() {
+  return (
+    <Suspense>
+      <AdminPageContent />
+    </Suspense>
+  );
+}
+
+function AdminPageContent() {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("profiles");
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as Tab) || "profiles";
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [introductions, setIntroductions] = useState<SuggestedIntroduction[]>([]);
@@ -49,6 +59,8 @@ export default function AdminPage() {
       .then(([p, w]) => { setProfiles(p); setWaitlist(w); })
       .catch(() => setError("Failed to load data."))
       .finally(() => setLoading(false));
+
+    if (initialTab === "introductions") loadIntroductions();
   }, [router]);
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -183,6 +195,7 @@ export default function AdminPage() {
           {(["profiles", "waitlist", "introductions"] as Tab[]).map((t) => (
             <button key={t} onClick={() => {
               setTab(t);
+              router.replace(`/admin?tab=${t}`, { scroll: false });
               if (t === "introductions" && introductions.length === 0) loadIntroductions();
             }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
