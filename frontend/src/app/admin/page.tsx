@@ -133,6 +133,13 @@ function AdminPageContent() {
     try {
       const data = await api.admin.suggestedIntroductions();
       setIntroductions(data);
+      // Seed sent set from persisted introductions
+      const alreadySent = new Set(
+        data
+          .filter((i) => i.previous_introduction)
+          .map((i) => [i.profile_a.id, i.profile_b.id].sort().join("-"))
+      );
+      setSent(alreadySent);
     } catch {
       setError("Failed to load suggested introductions.");
     } finally {
@@ -327,6 +334,7 @@ function AdminPageContent() {
                       const other = intro.profile_a.id === selectedPersonId ? intro.profile_b : intro.profile_a;
                       const key = [intro.profile_a.id, intro.profile_b.id].sort().join("-");
                       const isSent = sent.has(key);
+                      const prevIntro = intro.previous_introduction;
                       const isSending = sending === key;
                       const isComposing = composingKey === key;
                       return (
@@ -345,9 +353,16 @@ function AdminPageContent() {
                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
                               <span className="text-xs text-gray-600">Score: {intro.score}</span>
                               {isSent ? (
-                                <span className="px-4 py-1.5 rounded-lg text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/25">
-                                  Sent
-                                </span>
+                                <div className="flex flex-col items-end gap-1">
+                                  <span className="px-4 py-1.5 rounded-lg text-sm font-medium bg-green-500/15 text-green-400 border border-green-500/25">
+                                    Introduced
+                                  </span>
+                                  {prevIntro && (
+                                    <span className="text-xs text-gray-500">
+                                      by {prevIntro.introduced_by} · {new Date(prevIntro.introduced_at).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </div>
                               ) : (
                                 <button
                                   onClick={() => {

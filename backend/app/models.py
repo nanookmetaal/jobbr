@@ -134,6 +134,26 @@ class WaitlistEntry(Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class Introduction(Base):
+    __tablename__ = "introductions"
+    __table_args__ = (UniqueConstraint("profile_id_a", "profile_id_b", name="uq_introduction"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    profile_id_a: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
+    )
+    profile_id_b: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), nullable=False
+    )
+    introduced_by: Mapped[str] = mapped_column(String, nullable=False)  # admin name
+    message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 class ConnectionRequest(Base):
     __tablename__ = "connection_requests"
     __table_args__ = (UniqueConstraint("from_profile_id", "to_profile_id", name="uq_connection_request"),)

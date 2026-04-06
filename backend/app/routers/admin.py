@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_admin
-from app.models import Admin, ConnectionRequest, Profile, WaitlistEntry
+from app.models import Admin, ConnectionRequest, Introduction, Profile, WaitlistEntry
 from app.schemas import ProfileResponse
 
 
@@ -215,6 +215,22 @@ async def get_suggested_introductions(
             })
 
     suggestions.sort(key=lambda x: x["score"], reverse=True)
+
+    intros_result = await db.execute(select(Introduction))
+    past_intros = {
+        tuple(sorted([str(i.profile_id_a), str(i.profile_id_b)])): {
+            "introduced_by": i.introduced_by,
+            "introduced_at": i.created_at.isoformat(),
+            "message": i.message,
+        }
+        for i in intros_result.scalars().all()
+    }
+
+    for s in suggestions[:15]:
+        key = tuple(sorted([s["profile_a"]["id"], s["profile_b"]["id"]]))
+        if key in past_intros:
+            s["previous_introduction"] = past_intros[key]
+
     return suggestions[:15]
 
 
@@ -275,6 +291,28 @@ async def send_introduction(
 
     if errors:
         raise HTTPException(status_code=500, detail=f"Email send failed: {'; '.join(errors)}")
+
+    # Persist introduction record (upsert - re-introducing updates timestamp/message)
+    existing = await db.execute(
+        select(Introduction).where(
+            or_(
+                (Introduction.profile_id_a == str(body.profile_id_a)) & (Introduction.profile_id_b == str(body.profile_id_b)),
+                (Introduction.profile_id_a == str(body.profile_id_b)) & (Introduction.profile_id_b == str(body.profile_id_a)),
+            )
+        )
+    )
+    intro = existing.scalar_one_or_none()
+    if intro:
+        intro.introduced_by = admin_name
+        intro.message = body.message
+    else:
+        db.add(Introduction(
+            profile_id_a=body.profile_id_a,
+            profile_id_b=body.profile_id_b,
+            introduced_by=admin_name,
+            message=body.message,
+        ))
+    await db.commit()
 
     return {"message": f"Introduction sent between {profile_a.name} and {profile_b.name}"}
 

@@ -82,6 +82,11 @@ export interface SuggestedIntroduction {
   profile_a: Profile;
   profile_b: Profile;
   score: number;
+  previous_introduction?: {
+    introduced_by: string;
+    introduced_at: string;
+    message: string | null;
+  };
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
