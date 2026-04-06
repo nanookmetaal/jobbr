@@ -69,8 +69,11 @@ async def analyze_profile(profile: dict, previous_analyses: Optional[dict] = Non
             "has been addressed, acknowledge it as a strength instead.\n\n"
             if prev_gaps_str else ""
         )
-        + "Return a JSON object with keys: 'completeness_score' (0-100), "
-        "'strengths' (list of strings), 'gaps' (list of strings), 'summary' (string)."
+        + "Return a JSON object with keys: "
+        "'clarity_score' (0-100, how clearly the profile communicates who this person is and what they're looking for), "
+        "'what_stands_out' (list of strings, genuine things that make this person interesting or easy to connect with), "
+        "'what_could_be_clearer' (list of strings, anything that left you unsure about who they are or what they want - only if real), "
+        "'impression' (string, 1-2 sentences on the overall feel of the profile as a human being reading it)."
     )
 
     analyst_raw = await _call(llm, analyst_system, analyst_human)

@@ -334,15 +334,15 @@ function ProfileTypeBadge({ type }: { type: string }) {
 }
 
 function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
-  const score = result.completeness_score as number | undefined;
-  const strengths = (result.strengths as string[]) ?? [];
-  const gaps = (result.gaps as string[]) ?? [];
-  const summary = result.summary as string | undefined;
+  const score = result.clarity_score as number | undefined;
+  const standsOut = (result.what_stands_out as string[]) ?? [];
+  const couldBeClearer = (result.what_could_be_clearer as string[]) ?? [];
+  const impression = result.impression as string | undefined;
   const raw = result.raw_output as string | undefined;
 
   return (
     <div className="rounded-xl border border-blue-800 bg-blue-950/20 p-5 space-y-4">
-      <h4 className="font-semibold text-blue-300 text-base">Profile Analysis</h4>
+      <h4 className="font-semibold text-blue-300 text-base">Profile Feedback</h4>
 
       {raw ? (
         <p className="text-sm text-gray-300 leading-relaxed">{raw}</p>
@@ -351,7 +351,7 @@ function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
           {score !== undefined && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-gray-400 uppercase tracking-wide">Completeness</span>
+                <span className="text-xs text-gray-400 uppercase tracking-wide">Clarity</span>
                 <span className="text-sm font-bold text-blue-300">{score}/100</span>
               </div>
               <div className="h-2 rounded-full bg-gray-800">
@@ -363,16 +363,16 @@ function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
             </div>
           )}
 
-          {summary && (
-            <p className="text-sm text-gray-300 leading-relaxed">{summary}</p>
+          {impression && (
+            <p className="text-sm text-gray-300 leading-relaxed">{impression}</p>
           )}
 
           <div className="grid sm:grid-cols-2 gap-3">
-            {strengths.length > 0 && (
+            {standsOut.length > 0 && (
               <div className="rounded-lg bg-green-950/30 border border-green-800/50 p-3">
-                <p className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-2">Strengths</p>
+                <p className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-2">What stands out</p>
                 <ul className="space-y-1.5">
-                  {strengths.map((s, i) => (
+                  {standsOut.map((s, i) => (
                     <li key={i} className="text-sm text-gray-300 flex gap-2">
                       <span className="text-green-400 flex-shrink-0">+</span>
                       {s}
@@ -381,11 +381,11 @@ function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
                 </ul>
               </div>
             )}
-            {gaps.length > 0 && (
+            {couldBeClearer.length > 0 && (
               <div className="rounded-lg bg-orange-950/30 border border-orange-800/50 p-3">
-                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wide mb-2">Gaps</p>
+                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wide mb-2">Could be clearer</p>
                 <ul className="space-y-1.5">
-                  {gaps.map((g, i) => (
+                  {couldBeClearer.map((g, i) => (
                     <li key={i} className="text-sm text-gray-300 flex gap-2">
                       <span className="text-orange-400 flex-shrink-0">-</span>
                       {g}
