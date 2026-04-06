@@ -67,7 +67,7 @@ async def run_analysis(
         "website_url": profile.website_url,
     }
 
-    # Fetch previous analysis to give the coach context on what was already addressed
+    # Fetch previous analysis to avoid repeating already-addressed feedback
     prev_result = await db.execute(
         select(AgentAnalysis)
         .where(AgentAnalysis.profile_id == profile.id)

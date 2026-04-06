@@ -125,7 +125,6 @@ function DashboardContent() {
   }
 
   const analystResult = analyses.find((a) => a.agent_type === "profile_analyst");
-  const coachResult = analyses.find((a) => a.agent_type === "profile_coach");
   return (
     <>
       <Navbar />
@@ -251,7 +250,6 @@ function DashboardContent() {
             </div>
 
             {analystResult && <ProfileAnalystCard result={analystResult.result} />}
-            {coachResult && <ProfileCoachCard result={coachResult.result} />}
           </div>
         )}
       </div>
@@ -403,82 +401,6 @@ function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
   );
 }
 
-function ProfileCoachCard({ result }: { result: Record<string, unknown> }) {
-  const tips = (result.tips as string[]) ?? [];
-  const titleSuggestion = result.title_suggestion as string | undefined;
-  const improvedBio = result.improved_bio as string | undefined;
-  const suggestedSkills = (result.suggested_skills as string[]) ?? [];
-  const lookingForSuggestion = result.looking_for_suggestion as string | undefined;
-  const raw = result.raw_output as string | undefined;
-
-  return (
-    <div className="rounded-xl border border-purple-800 bg-purple-950/20 p-5 space-y-4">
-      <h4 className="font-semibold text-purple-300 text-base">Coach Suggestions</h4>
-
-      {raw ? (
-        <p className="text-sm text-gray-300 leading-relaxed">{raw}</p>
-      ) : (
-        <>
-          {titleSuggestion && (
-            <div>
-              <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-1">Suggested Title</p>
-              <p className="text-sm text-white font-medium bg-purple-950/40 border border-purple-800/50 rounded-lg px-3 py-2">
-                {titleSuggestion}
-              </p>
-            </div>
-          )}
-
-          {improvedBio && (
-            <div>
-              <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-1">Improved Bio</p>
-              <p className="text-sm text-gray-300 leading-relaxed bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700/50">
-                {improvedBio}
-              </p>
-            </div>
-          )}
-
-          {suggestedSkills.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-2">Add These Skills</p>
-              <div className="flex flex-wrap gap-1.5">
-                {suggestedSkills.map((skill, i) => (
-                  <span key={i} className="px-2.5 py-1 rounded-full bg-purple-900/50 border border-purple-700/50 text-purple-200 text-xs">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {lookingForSuggestion && (
-            <div>
-              <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-1">Looking For - Rewrite</p>
-              <p className="text-sm text-gray-300 leading-relaxed bg-gray-800/50 rounded-lg px-3 py-2 border border-gray-700/50">
-                {lookingForSuggestion}
-              </p>
-            </div>
-          )}
-
-          {tips.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-2">Tips</p>
-              <ul className="space-y-2">
-                {tips.map((tip, i) => (
-                  <li key={i} className="flex gap-2.5 text-sm text-gray-300">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-800/60 text-purple-300 text-xs flex items-center justify-center font-bold mt-0.5">
-                      {i + 1}
-                    </span>
-                    {tip}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
 
 function Spinner({ size = "sm" }: { size?: "sm" | "lg" }) {
   const sz = size === "lg" ? "h-8 w-8" : "h-4 w-4";

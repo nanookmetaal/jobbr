@@ -45,22 +45,24 @@ async def analyze_profile(profile: dict, previous_analyses: Optional[dict] = Non
     profile_str = json.dumps(profile, indent=2)
 
     prev_gaps_str = ""
-    prev_tips_str = ""
     if previous_analyses:
         prev_gaps = (previous_analyses.get("profile_analyst") or {}).get("gaps", [])
-        prev_tips = (previous_analyses.get("profile_coach") or {}).get("tips", [])
         if prev_gaps:
             prev_gaps_str = f"\nPreviously flagged gaps: {json.dumps(prev_gaps)}"
-        if prev_tips:
-            prev_tips_str = f"\nPrevious tips given: {json.dumps(prev_tips)}"
 
     analyst_system = (
-        "You are a seasoned talent acquisition specialist reviewing professional profiles. "
-        "Be honest and calibrated: if a profile is strong, say so with a high score and few gaps. "
-        "Only flag genuine issues - do not manufacture criticism on a well-written profile."
+        "You are reviewing profiles on a small, trusted professional community platform. "
+        "This is NOT LinkedIn or a recruiter database - the people reading these profiles "
+        "already have a relationship with the organiser and are likely familiar with each other. "
+        "The goal of a profile here is to help someone quickly understand who this person is, "
+        "what they bring, and what they're looking for - so a relevant connection can reach out. "
+        "Evaluate how well the profile communicates this in a warm, human way. "
+        "Be honest and calibrated: if a profile is clear and genuine, say so with a high score. "
+        "Do not flag things through a recruiter or ATS lens - avoid advice about shortlisting, "
+        "keyword optimisation, or impressing hiring managers. Focus on clarity and authenticity."
     )
     analyst_human = (
-        f"Analyze the following professional profile:\n\n{profile_str}\n\n"
+        f"Analyze the following profile:\n\n{profile_str}\n\n"
         + (
             f"This person has updated their profile based on prior feedback.{prev_gaps_str}\n"
             "Only list a gap if it genuinely still applies. If a previously flagged issue "
@@ -73,34 +75,10 @@ async def analyze_profile(profile: dict, previous_analyses: Optional[dict] = Non
 
     analyst_raw = await _call(llm, analyst_system, analyst_human)
 
-    coach_system = (
-        "You are an executive career coach. Suggest concrete improvements to strengthen "
-        "a professional profile. If the profile is already strong in an area, do not "
-        "suggest changes to it - only address genuine remaining weaknesses."
-    )
-    coach_human = (
-        f"Analyst review:\n\n{analyst_raw}\n\n"
-        f"Original profile:\n\n{profile_str}\n\n"
-        + (
-            f"Previously given tips:{prev_tips_str}\n"
-            "Do not repeat tips that have already been acted on.\n\n"
-            if prev_tips_str else ""
-        )
-        + "Return a JSON object with keys: "
-        "'improved_bio' (string), 'suggested_skills' (list), "
-        "'title_suggestion' (string), 'looking_for_suggestion' (string), "
-        "'tips' (list of strings)."
-    )
-
-    coach_raw = await _call(llm, coach_system, coach_human)
-
-    return {
-        "profile_analyst": _extract_json(analyst_raw),
-        "profile_coach": _extract_json(coach_raw),
-    }
+    return {"profile_analyst": _extract_json(analyst_raw)}
 
 
-async def generate_embeddings(profile: dict) -> tuple[list[float], list[float]]:
+async def generate_embeddings(profile: dict) -> tuple[list, list]:
     """Return (offer_embedding, seek_embedding) for a profile."""
     parts = [
         profile.get('title', ''),
