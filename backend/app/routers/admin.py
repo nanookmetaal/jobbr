@@ -2,14 +2,19 @@ from datetime import datetime, timezone
 
 import resend
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_admin
-from app.models import ConnectionRequest, Profile, WaitlistEntry
+from app.models import Admin, ConnectionRequest, Profile, WaitlistEntry
 from app.schemas import ProfileResponse
+
+
+class InviteRequest(BaseModel):
+    email: str
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -78,6 +83,57 @@ async def approve_waitlist_entry(
         pass  # Approval saved; email failure is non-fatal here
 
     return {"message": f"{email} approved and notified"}
+
+
+@router.post("/invite")
+async def invite_user(
+    body: InviteRequest,
+    _: str = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    email = body.email.lower().strip()
+
+    # Already has a profile - no need to invite
+    existing_profile = await db.execute(select(Profile).where(Profile.email == email))
+    if existing_profile.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="This email already has a profile")
+
+    # Admins don't need inviting
+    existing_admin = await db.execute(select(Admin).where(Admin.email == email))
+    if existing_admin.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="This email belongs to an admin")
+
+    now = datetime.now(timezone.utc)
+    waitlist_result = await db.execute(select(WaitlistEntry).where(WaitlistEntry.email == email))
+    entry = waitlist_result.scalar_one_or_none()
+
+    if entry:
+        if entry.status == "approved":
+            raise HTTPException(status_code=400, detail="This email is already approved")
+        entry.status = "approved"
+        entry.approved_at = now
+    else:
+        db.add(WaitlistEntry(email=email, status="approved", approved_at=now))
+
+    await db.commit()
+
+    resend.api_key = settings.RESEND_API_KEY
+    try:
+        resend.Emails.send({
+            "from": settings.EMAIL_FROM,
+            "to": [email],
+            "subject": "You're invited to Jobbr",
+            "html": (
+                f"<p>You've been invited to join Jobbr, a professional community for makers and builders.</p>"
+                f'<p><a href="{settings.FRONTEND_URL}" style="background:#2563eb;color:#fff;'
+                f'padding:10px 20px;border-radius:6px;text-decoration:none;">Join Jobbr</a></p>'
+                f"<p>Just enter your email address and we'll send you a sign-in link.</p>"
+            ),
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Invite saved but email failed: {e}")
+
+    return {"message": f"Invite sent to {email}"}
 
 
 @router.get("/suggested-introductions")

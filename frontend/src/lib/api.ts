@@ -171,6 +171,11 @@ export const api = {
       request<{ message: string }>(`/admin/waitlist/${encodeURIComponent(email)}/approve`, { method: "POST" }),
     deleteProfile: (profileId: string) =>
       request<{ message: string }>(`/admin/profiles/${profileId}`, { method: "DELETE" }),
+    invite: (email: string) =>
+      request<{ message: string }>("/admin/invite", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }),
     suggestedIntroductions: () =>
       request<SuggestedIntroduction[]>("/admin/suggested-introductions"),
     sendIntroduction: (profileIdA: string, profileIdB: string) =>

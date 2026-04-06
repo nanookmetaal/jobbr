@@ -32,6 +32,10 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [approving, setApproving] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated() || !isAdminSession()) {
@@ -43,6 +47,44 @@ export default function AdminPage() {
       .catch(() => setError("Failed to load data."))
       .finally(() => setLoading(false));
   }, [router]);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviting(true);
+    setInviteError(null);
+    setInviteSuccess(null);
+    try {
+      await api.admin.invite(inviteEmail.trim());
+      setInviteSuccess(`Invite sent to ${inviteEmail.trim()}`);
+      setWaitlist((prev) => {
+        const existing = prev.find((e) => e.email === inviteEmail.trim().toLowerCase());
+        if (existing) {
+          return prev.map((e) =>
+            e.email === inviteEmail.trim().toLowerCase()
+              ? { ...e, status: "approved", approved_at: new Date().toISOString() }
+              : e
+          );
+        }
+        return [
+          {
+            id: crypto.randomUUID(),
+            email: inviteEmail.trim().toLowerCase(),
+            first_name: null,
+            last_name: null,
+            status: "approved",
+            created_at: new Date().toISOString(),
+            approved_at: new Date().toISOString(),
+          },
+          ...prev,
+        ];
+      });
+      setInviteEmail("");
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : "Failed to send invite");
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const handleApprove = async (email: string) => {
     setApproving(email);
@@ -295,6 +337,30 @@ export default function AdminPage() {
         {/* Waitlist tab */}
         {tab === "waitlist" && (
           <div className="space-y-3">
+            {/* Invite form */}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-2">
+              <h3 className="text-sm font-semibold text-white mb-3">Invite someone</h3>
+              <form onSubmit={handleInvite} className="flex gap-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="email@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+                <button
+                  type="submit"
+                  disabled={inviting}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                >
+                  {inviting ? "Sending..." : "Send invite"}
+                </button>
+              </form>
+              {inviteSuccess && <p className="text-sm text-green-400 mt-2">{inviteSuccess}</p>}
+              {inviteError && <p className="text-sm text-red-400 mt-2">{inviteError}</p>}
+            </div>
+
             {waitlist.length === 0 && (
               <p className="text-gray-500 text-sm">No waitlist entries yet.</p>
             )}
