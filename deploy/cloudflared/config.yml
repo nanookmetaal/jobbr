@@ -14,5 +14,9 @@ ingress:
   - hostname: dev-api.yourdomain.com
     service: http://backend:8000
 
+  # SSH access (used by GitHub Actions for automated deploys)
+  - hostname: ssh.dev.yourdomain.com
+    service: ssh://localhost:22
+
   # Catch-all (required by cloudflared)
   - service: http_status:404
