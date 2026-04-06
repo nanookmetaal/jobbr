@@ -321,6 +321,9 @@ function AdminPageContent() {
                         <p className={`text-xs mt-0.5 truncate ${selectedPersonId === p.id ? "text-blue-200" : "text-gray-500"}`}>
                           {p.profile_type.replace("_", " ")}
                         </p>
+                        {selectedPersonId === p.id && (
+                          <p className="text-xs mt-0.5 truncate text-blue-300 font-mono">{p.email}</p>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -337,7 +340,6 @@ function AdminPageContent() {
                       const prevIntro = intro.previous_introduction;
                       const isSending = sending === key;
                       const isComposing = composingKey === key;
-                      const selectedProfile = intro.profile_a.id === selectedPersonId ? intro.profile_a : intro.profile_b;
                       return (
                         <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
                           <div className="flex items-center gap-4">
@@ -350,11 +352,7 @@ function AdminPageContent() {
                               </div>
                               <p className="text-xs text-gray-400">{other.title}</p>
                               <p className="text-xs text-gray-500 mt-0.5">{other.location}</p>
-                              <div className="flex gap-3 mt-1.5">
-                                <span className="text-xs text-gray-600 font-mono">{selectedProfile.email}</span>
-                                <span className="text-xs text-gray-700">·</span>
-                                <span className="text-xs text-gray-600 font-mono">{other.email}</span>
-                              </div>
+                              <p className="text-xs text-gray-600 font-mono mt-1.5">{other.email}</p>
                             </div>
                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
                               <span className="text-xs text-gray-600">Score: {intro.score}</span>
