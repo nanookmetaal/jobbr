@@ -98,10 +98,9 @@ async def unapprove_waitlist_entry(
     if entry.status == "pending":
         raise HTTPException(status_code=400, detail="Already pending")
 
-    entry.status = "pending"
-    entry.approved_at = None
+    await db.delete(entry)
     await db.commit()
-    return {"message": f"{email} unapproved"}
+    return {"message": f"{email} removed from waitlist"}
 
 
 @router.post("/invite")

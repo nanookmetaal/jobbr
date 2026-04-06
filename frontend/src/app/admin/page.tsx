@@ -93,9 +93,7 @@ export default function AdminPage() {
     setUnapproving(email);
     try {
       await api.admin.unapprove(email);
-      setWaitlist((prev) =>
-        prev.map((e) => e.email === email ? { ...e, status: "pending", approved_at: null } : e)
-      );
+      setWaitlist((prev) => prev.filter((e) => e.email !== email));
     } catch {
       alert("Failed to unapprove.");
     } finally {
