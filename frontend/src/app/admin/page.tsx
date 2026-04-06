@@ -322,7 +322,7 @@ function AdminPageContent() {
                           {p.profile_type.replace("_", " ")}
                         </p>
                         {selectedPersonId === p.id && (
-                          <p className="text-xs mt-0.5 truncate text-blue-300 font-mono">{p.email}</p>
+                          <CopyEmail email={p.email} light />
                         )}
                       </button>
                     ))}
@@ -352,7 +352,7 @@ function AdminPageContent() {
                               </div>
                               <p className="text-xs text-gray-400">{other.title}</p>
                               <p className="text-xs text-gray-500 mt-0.5">{other.location}</p>
-                              <p className="text-xs text-gray-600 font-mono mt-1.5">{other.email}</p>
+                              <div className="mt-1.5"><CopyEmail email={other.email} /></div>
                             </div>
                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
                               <span className="text-xs text-gray-600">Score: {intro.score}</span>
@@ -486,6 +486,27 @@ function AdminPageContent() {
       </div>
     </main>
     </>
+  );
+}
+
+function CopyEmail({ email, light = false }: { email: string; light?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(email);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <span className="flex items-center gap-1">
+      <span className={`text-xs font-mono ${light ? "text-blue-300" : "text-gray-600"}`}>{email}</span>
+      <button
+        onClick={copy}
+        className={`text-xs px-1 rounded transition-colors ${light ? "text-blue-400 hover:text-blue-200" : "text-gray-600 hover:text-gray-300"}`}
+        title="Copy email"
+      >
+        {copied ? "✓" : "⎘"}
+      </button>
+    </span>
   );
 }
 
