@@ -22,7 +22,17 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 
 
 @router.get("/analyses/{profile_id}", response_model=list[AgentAnalysisResponse])
-async def get_analyses(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_analyses(
+    profile_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_email: str = Depends(get_current_email),
+):
+    profile = await db.get(Profile, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
+
     result = await db.execute(
         select(AgentAnalysis)
         .where(AgentAnalysis.profile_id == profile_id)
@@ -44,11 +54,13 @@ async def get_analyses(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 async def run_analysis(
     body: RunAgentsRequest,
     db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_email),
+    current_email: str = Depends(get_current_email),
 ):
     profile = await db.get(Profile, body.profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
 
     profile_dict = {
         "id": str(profile.id),
@@ -96,7 +108,17 @@ async def run_analysis(
 
 
 @router.get("/matches/{profile_id}", response_model=list[MatchResponse])
-async def get_matches(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_matches(
+    profile_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_email: str = Depends(get_current_email),
+):
+    profile = await db.get(Profile, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
+
     result = await db.execute(
         select(Match).where(
             Match.profile_id_a == profile_id,
@@ -126,11 +148,13 @@ async def get_matches(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db))
 async def run_matches(
     body: FindMatchesRequest,
     db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_email),
+    current_email: str = Depends(get_current_email),
 ):
     profile = await db.get(Profile, body.profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
 
     if profile.offer_embedding is None or profile.seek_embedding is None:
         raise HTTPException(status_code=400, detail="Profile embeddings not yet generated")

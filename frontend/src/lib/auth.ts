@@ -17,7 +17,11 @@ export function setSession(token: string, email: string, profileId: string | nul
   localStorage.setItem("auth_token", token);
   localStorage.setItem("auth_email", email);
   localStorage.setItem("auth_is_admin", isAdmin ? "true" : "false");
-  if (profileId) localStorage.setItem("profile_id", profileId);
+  if (profileId) {
+    localStorage.setItem("profile_id", profileId);
+  } else {
+    localStorage.removeItem("profile_id");
+  }
 }
 
 export function clearSession(): void {

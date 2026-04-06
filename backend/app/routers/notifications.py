@@ -14,7 +14,17 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 
 @router.get("/{profile_id}", response_model=list[NotificationResponse])
-async def list_notifications(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def list_notifications(
+    profile_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_email: str = Depends(get_current_email),
+):
+    profile = await db.get(Profile, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
+
     result = await db.execute(
         select(Notification)
         .where(Notification.profile_id == profile_id)
@@ -29,7 +39,7 @@ async def list_notifications(profile_id: uuid.UUID, db: AsyncSession = Depends(g
 async def mark_notification_read(
     notification_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_email),
+    current_email: str = Depends(get_current_email),
 ):
     result = await db.execute(
         select(Notification)
@@ -39,6 +49,10 @@ async def mark_notification_read(
     notification = result.scalar_one_or_none()
     if not notification:
         raise HTTPException(status_code=404, detail="Notification not found")
+
+    owner = await db.get(Profile, notification.profile_id)
+    if not owner or owner.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
 
     notification.is_read = True
     await db.commit()

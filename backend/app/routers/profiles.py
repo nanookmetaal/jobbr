@@ -56,11 +56,13 @@ async def update_profile(
     profile_id: uuid.UUID,
     body: ProfileUpdate,
     db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_email),
+    current_email: str = Depends(get_current_email),
 ):
     profile = await db.get(Profile, profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
 
     updates = body.model_dump(exclude_none=True)
     for field, value in updates.items():
@@ -89,10 +91,12 @@ async def update_profile(
 async def delete_profile(
     profile_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: str = Depends(get_current_email),
+    current_email: str = Depends(get_current_email),
 ):
     profile = await db.get(Profile, profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
     await db.delete(profile)
     await db.commit()
