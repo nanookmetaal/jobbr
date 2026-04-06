@@ -85,6 +85,25 @@ async def approve_waitlist_entry(
     return {"message": f"{email} approved and notified"}
 
 
+@router.post("/waitlist/{email}/unapprove")
+async def unapprove_waitlist_entry(
+    email: str,
+    _: str = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(WaitlistEntry).where(WaitlistEntry.email == email))
+    entry = result.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Email not on waitlist")
+    if entry.status == "pending":
+        raise HTTPException(status_code=400, detail="Already pending")
+
+    entry.status = "pending"
+    entry.approved_at = None
+    await db.commit()
+    return {"message": f"{email} unapproved"}
+
+
 @router.post("/invite")
 async def invite_user(
     body: InviteRequest,

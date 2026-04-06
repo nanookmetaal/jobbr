@@ -31,6 +31,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approving, setApproving] = useState<string | null>(null);
+  const [unapproving, setUnapproving] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
@@ -83,6 +84,20 @@ export default function AdminPage() {
       setInviteError(err instanceof Error ? err.message : "Failed to send invite");
     } finally {
       setInviting(false);
+    }
+  };
+
+  const handleUnapprove = async (email: string) => {
+    setUnapproving(email);
+    try {
+      await api.admin.unapprove(email);
+      setWaitlist((prev) =>
+        prev.map((e) => e.email === email ? { ...e, status: "pending", approved_at: null } : e)
+      );
+    } catch {
+      alert("Failed to unapprove.");
+    } finally {
+      setUnapproving(null);
     }
   };
 
@@ -388,9 +403,18 @@ export default function AdminPage() {
                       {approving === e.email ? "Approving..." : "Approve"}
                     </button>
                   ) : (
-                    <span className="text-xs px-3 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
-                      Approved
-                    </span>
+                    <>
+                      <span className="text-xs px-3 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
+                        Approved
+                      </span>
+                      <button
+                        onClick={() => handleUnapprove(e.email)}
+                        disabled={unapproving === e.email}
+                        className="text-xs text-orange-500 hover:text-orange-400 transition-colors disabled:opacity-50"
+                      >
+                        {unapproving === e.email ? "Revoking..." : "Revoke"}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
