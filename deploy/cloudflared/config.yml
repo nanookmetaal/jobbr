@@ -1,0 +1,18 @@
+# Cloudflare Tunnel config
+# Replace <TUNNEL_ID> with your tunnel ID (from: cloudflared tunnel create jobbr-dev)
+# Place the tunnel credentials JSON file at deploy/cloudflared/<TUNNEL_ID>.json
+
+tunnel: <TUNNEL_ID>
+credentials-file: /etc/cloudflared/<TUNNEL_ID>.json
+
+ingress:
+  # Frontend
+  - hostname: dev.yourdomain.com
+    service: http://frontend:3000
+
+  # Backend API
+  - hostname: dev-api.yourdomain.com
+    service: http://backend:8000
+
+  # Catch-all (required by cloudflared)
+  - service: http_status:404
