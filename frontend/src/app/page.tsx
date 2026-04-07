@@ -180,9 +180,9 @@ export default function Home() {
 
         <div className="mt-16 grid grid-cols-3 gap-8 w-full max-w-lg">
           {[
-            { label: "Smart Matching", desc: "Matched on complementary goals and skills" },
-            { label: "Profile Coaching", desc: "Get actionable feedback on your profile" },
-            { label: "Connect", desc: "Reach out to people who get it" },
+            { label: "Your Community", desc: "Meet the people building things around you" },
+            { label: "Learn from the Best", desc: "Get guidance from those who've been where you're going" },
+            { label: "Pay It Forward", desc: "Share what you know and lift others as you grow" },
           ].map((f) => (
             <div key={f.label} className="flex flex-col items-center text-center gap-2">
               <div className="text-xs font-semibold text-blue-400 uppercase tracking-widest">
