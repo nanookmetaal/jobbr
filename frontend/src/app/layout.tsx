@@ -10,6 +10,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Jobbr - Professional Matching",
   description: "Find your next opportunity or mentor.",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({
