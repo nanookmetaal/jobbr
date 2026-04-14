@@ -35,7 +35,11 @@ async def create_profile(
 
 
 @router.get("", response_model=list[ProfileResponse])
-async def list_profiles(email: str | None = None, db: AsyncSession = Depends(get_db)):
+async def list_profiles(
+    email: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(get_current_email),
+):
     query = select(Profile).order_by(Profile.created_at.desc())
     if email:
         query = query.where(Profile.email == email)
@@ -44,7 +48,11 @@ async def list_profiles(email: str | None = None, db: AsyncSession = Depends(get
 
 
 @router.get("/{profile_id}", response_model=ProfileResponse)
-async def get_profile(profile_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+async def get_profile(
+    profile_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    _: str = Depends(get_current_email),
+):
     profile = await db.get(Profile, profile_id)
     if not profile:
         raise HTTPException(status_code=404, detail="Profile not found")

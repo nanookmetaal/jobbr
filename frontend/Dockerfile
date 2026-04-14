@@ -7,10 +7,6 @@ RUN npm ci
 
 COPY . .
 
-# NEXT_PUBLIC_* vars are baked in at build time
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-
 ENV NEXT_OUTPUT=standalone
 RUN npm run build
 

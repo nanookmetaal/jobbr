@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
+const BASE_URL = "/api";
 
 export type ProfileType = "job_seeker" | "employer" | "mentor" | "mentee";
 

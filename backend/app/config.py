@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     VOYAGE_API_KEY: str
     JWT_SECRET: str
     ADMIN_EMAIL: str = ""
-    ADMIN_SECRET: str = ""
+    SERVICE_KEY: str = ""
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

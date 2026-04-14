@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, timezone
 import jwt
 import resend
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -65,19 +64,16 @@ async def request_magic_link(body: MagicLinkRequest, db: AsyncSession = Depends(
             await db.commit()
 
             full_name = f"{body.first_name.strip()} {body.last_name.strip()}"
-            approve_url = (
-                f"{settings.FRONTEND_URL}/auth/approve"
-                f"?email={email}&secret={settings.ADMIN_SECRET}"
-            )
+            admin_url = f"{settings.FRONTEND_URL}/admin"
             try:
                 _send_email(
                     to=settings.ADMIN_EMAIL,
                     subject=f"Jobbr access request from {full_name}",
                     html=(
                         f"<p><strong>{full_name}</strong> ({email}) has requested access to Jobbr.</p>"
-                        f'<p><a href="{approve_url}" style="background:#2563eb;color:#fff;'
+                        f'<p><a href="{admin_url}" style="background:#2563eb;color:#fff;'
                         f'padding:10px 20px;border-radius:6px;text-decoration:none;">'
-                        f"Approve access</a></p>"
+                        f"Review in admin dashboard</a></p>"
                     ),
                 )
             except Exception:
@@ -161,44 +157,6 @@ async def request_email_change(
 
     return {"message": "If that address is available, a verification email has been sent."}
 
-
-@router.get("/approve")
-async def approve_user(email: str, secret: str, db: AsyncSession = Depends(get_db)):
-    if not settings.ADMIN_SECRET or secret != settings.ADMIN_SECRET:
-        raise HTTPException(status_code=403, detail="Invalid secret")
-
-    result = await db.execute(select(WaitlistEntry).where(WaitlistEntry.email == email))
-    entry = result.scalar_one_or_none()
-
-    if not entry:
-        return HTMLResponse("<h2>Not found - this email is not on the waitlist.</h2>")
-
-    if entry.status == "approved":
-        return HTMLResponse(f"<h2>{email} is already approved.</h2>")
-
-    entry.status = "approved"
-    entry.approved_at = datetime.now(timezone.utc)
-    await db.commit()
-
-    invite_url = settings.FRONTEND_URL
-    try:
-        _send_email(
-            to=email,
-            subject="You're in - sign in to Jobbr",
-            html=(
-                f"<p>Great news - your Jobbr access request has been approved!</p>"
-                f'<p><a href="{invite_url}" style="background:#2563eb;color:#fff;'
-                f'padding:10px 20px;border-radius:6px;text-decoration:none;">'
-                f"Sign in to Jobbr</a></p>"
-                f"<p>Just enter your email address and we'll send you a sign-in link.</p>"
-            ),
-        )
-    except Exception as e:
-        return HTMLResponse(f"<h2>Approved, but failed to send invitation email: {e}</h2>")
-
-    return HTMLResponse(
-        f"<h2>Approved!</h2><p>An invitation email has been sent to {email}.</p>"
-    )
 
 
 @router.get("/verify")

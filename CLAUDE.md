@@ -147,15 +147,16 @@ See `backend/.env.example` for the full list.
 | `EMAIL_FROM` | Yes | Your Resend domain | Must match the domain your Resend API key is scoped to. Format: `Jobbr <noreply@yourdomain.com>` |
 | `JWT_SECRET` | Yes | Generate yourself | Random secret for signing session JWTs. Run `openssl rand -hex 32` to generate one. |
 | `FRONTEND_URL` | Yes | Your deployment | Used for CORS and constructing magic link URLs. Must include `https://` - no trailing slash. |
-| `ADMIN_SECRET` | Yes | Generate yourself | Secret used in admin approval email links. Run `openssl rand -hex 20` to generate one. |
+| `SERVICE_KEY` | Yes | Generate yourself | Shared secret between frontend server and backend. Run `openssl rand -hex 32`. Must match `SERVICE_KEY` in frontend env. |
 
 ### Frontend variables
 
 | Variable | Required | Description |
 |---|---|---|
 | `BACKEND_URL` | Vercel only | Full URL of the deployed backend, e.g. `https://jobbr-hazel.vercel.app`. No trailing slash. Not needed locally or on Proxmox (defaults to `http://localhost:8000`). |
+| `SERVICE_KEY` | Yes | Shared secret injected into every proxied request. Must match `SERVICE_KEY` in backend env. |
 
-All API calls from the browser go through `/api/*` - the Next.js rewrite forwards them to `BACKEND_URL` server-side. The backend URL is never exposed to the browser.
+All API calls from the browser go through `/api/*` - the Next.js Route Handler forwards them to `BACKEND_URL` server-side, injecting the `SERVICE_KEY` header. The backend URL is never exposed to the browser.
 
 ## Key technical decisions
 
