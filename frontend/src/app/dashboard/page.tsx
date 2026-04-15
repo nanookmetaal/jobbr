@@ -68,11 +68,6 @@ function DashboardContent() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [notifOpen]);
 
-  const refreshNotifications = async (pid: string) => {
-    const notifs = await api.notifications.list(pid);
-    setNotifications(notifs);
-  };
-
   const runAnalysis = async () => {
     if (!profileId) return;
     setLoadingAnalysis(true);
@@ -103,7 +98,7 @@ function DashboardContent() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center">
           <Spinner size="lg" />
         </div>
       </>
@@ -114,9 +109,9 @@ function DashboardContent() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">
+        <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center text-stone-500">
           Profile not found.{" "}
-          <Link href="/profile/create" className="text-blue-400 ml-1 underline">
+          <Link href="/profile/create" className="text-amber-600 ml-1 underline">
             Create one
           </Link>
         </div>
@@ -128,140 +123,139 @@ function DashboardContent() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-950 px-4 py-10">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-end mb-6">
-          {/* Notification Bell */}
-          <div className="relative" ref={notifRef}>
-            <button
-              onClick={() => setNotifOpen((o) => !o)}
-              className="relative p-2 rounded-full hover:bg-gray-800 transition-colors text-gray-400 hover:text-white"
-              aria-label="Notifications"
-            >
-              <BellIcon />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </button>
+      <main className="min-h-screen bg-[#faf8f5] px-4 py-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-end mb-6">
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotifOpen((o) => !o)}
+                className="relative p-2 rounded-full hover:bg-stone-100 transition-colors text-stone-400 hover:text-stone-700"
+                aria-label="Notifications"
+              >
+                <BellIcon />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
 
-            {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-40 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-                  <span className="font-semibold text-white text-sm">Notifications</span>
-                  {unreadCount > 0 && (
-                    <span className="text-xs text-gray-400">{unreadCount} unread</span>
-                  )}
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-stone-200 rounded-xl shadow-lg z-40 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between">
+                    <span className="font-semibold text-stone-800 text-sm">Notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="text-xs text-stone-400">{unreadCount} unread</span>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-stone-400 text-sm">
+                        No notifications yet
+                      </div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <NotificationItem
+                          key={notif.id}
+                          notification={notif}
+                          onMarkRead={handleMarkRead}
+                        />
+                      ))
+                    )}
+                  </div>
                 </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-gray-500 text-sm">
-                      No notifications yet
-                    </div>
-                  ) : (
-                    notifications.map((notif) => (
-                      <NotificationItem
-                        key={notif.id}
-                        notification={notif}
-                        onMarkRead={handleMarkRead}
-                      />
-                    ))
-                  )}
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white border border-stone-200 rounded-2xl p-6 mb-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <span />
+              <Link
+                href="/profile/edit"
+                className="text-xs text-stone-400 hover:text-stone-600 transition-colors"
+              >
+                Edit Profile
+              </Link>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-full bg-amber-500 flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
+                {profile.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl font-bold text-stone-900">{profile.name}</h2>
+                  <ProfileTypeBadge type={profile.profile_type} />
+                  {profile.secondary_role && <ProfileTypeBadge type={profile.secondary_role} />}
                 </div>
+                <p className="text-stone-500 text-sm mt-0.5">{profile.title}</p>
+                <p className="text-stone-400 text-xs mt-0.5">{profile.location}</p>
+              </div>
+            </div>
+            <p className="text-stone-700 text-sm mt-4 leading-relaxed">{profile.bio}</p>
+            {profile.skills.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {profile.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-xs border border-stone-200"
+                  >
+                    {skill}
+                  </span>
+                ))}
               </div>
             )}
+            <div className="mt-4 pt-4 border-t border-stone-100 text-sm text-stone-500">
+              <span className="font-medium text-stone-700">Looking for: </span>
+              {profile.looking_for}
+            </div>
           </div>
-        </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <span />
-            <Link
-              href="/profile/edit"
-              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-            >
-              Edit Profile
-            </Link>
-          </div>
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-xl font-bold text-white flex-shrink-0">
-              {profile.name.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-bold text-white">{profile.name}</h2>
-                <ProfileTypeBadge type={profile.profile_type} />
-                {profile.secondary_role && <ProfileTypeBadge type={profile.secondary_role} />}
-              </div>
-              <p className="text-gray-400 text-sm mt-0.5">{profile.title}</p>
-              <p className="text-gray-500 text-xs mt-0.5">{profile.location}</p>
-            </div>
-          </div>
-          <p className="text-gray-300 text-sm mt-4 leading-relaxed">{profile.bio}</p>
-          {profile.skills.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-4">
-              {profile.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="px-2.5 py-1 rounded-full bg-gray-800 text-gray-300 text-xs border border-gray-700"
-                >
-                  {skill}
-                </span>
-              ))}
+          {error && (
+            <div className="mb-6 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">
+              {error}
             </div>
           )}
-          <div className="mt-4 pt-4 border-t border-gray-800 text-sm text-gray-400">
-            <span className="font-medium text-gray-300">Looking for: </span>
-            {profile.looking_for}
-          </div>
-        </div>
 
-        {error && (
-          <div className="mb-6 rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm px-4 py-3">
-            {error}
-          </div>
-        )}
-
-        <div className="flex gap-3 mb-8">
-          <button
-            onClick={runAnalysis}
-            disabled={loadingAnalysis}
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 px-6 py-4 font-semibold text-white transition-colors"
-          >
-            {loadingAnalysis ? (
-              <>
-                <Spinner />
-                Analyzing...
-              </>
-            ) : (
-              "Analyze My Profile"
-            )}
-          </button>
-          <a
-            href="/matches"
-            className="flex items-center justify-center gap-2 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 px-6 py-4 font-semibold text-white transition-colors"
-          >
-            View Matches
-          </a>
-        </div>
-
-        {analyses.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-white">Analysis Results</h3>
-              {analysisRunAt && (
-                <span className="text-xs text-gray-500">
-                  Last run {new Date(analysisRunAt).toLocaleString()}
-                </span>
+          <div className="flex gap-3 mb-8">
+            <button
+              onClick={runAnalysis}
+              disabled={loadingAnalysis}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 px-6 py-4 font-semibold text-white transition-colors"
+            >
+              {loadingAnalysis ? (
+                <>
+                  <Spinner />
+                  Analyzing...
+                </>
+              ) : (
+                "Analyze My Profile"
               )}
-            </div>
-
-            {analystResult && <ProfileAnalystCard result={analystResult.result} />}
+            </button>
+            <a
+              href="/matches"
+              className="flex items-center justify-center gap-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 px-6 py-4 font-semibold text-stone-700 transition-colors"
+            >
+              View Matches
+            </a>
           </div>
-        )}
-      </div>
-    </main>
+
+          {analyses.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-stone-800">Analysis Results</h3>
+                {analysisRunAt && (
+                  <span className="text-xs text-stone-400">
+                    Last run {new Date(analysisRunAt).toLocaleString()}
+                  </span>
+                )}
+              </div>
+
+              {analystResult && <ProfileAnalystCard result={analystResult.result} />}
+            </div>
+          )}
+        </div>
+      </main>
     </>
   );
 }
@@ -270,7 +264,7 @@ export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center">
           <Spinner size="lg" />
         </div>
       }
@@ -299,10 +293,10 @@ function NotificationItem({
   return (
     <button
       onClick={() => !notification.is_read && onMarkRead(notification.id)}
-      className={`w-full text-left px-4 py-3 border-b border-gray-800 last:border-0 transition-colors ${
+      className={`w-full text-left px-4 py-3 border-b border-stone-100 last:border-0 transition-colors ${
         notification.is_read
           ? "opacity-50 cursor-default"
-          : "hover:bg-gray-800/60 cursor-pointer"
+          : "hover:bg-stone-50 cursor-pointer"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -310,18 +304,18 @@ function NotificationItem({
           {notification.type === "introduction" ? "🤝" : notification.type === "connection_request" ? "👋" : "✨"}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-200 leading-snug">{notification.message}</p>
+          <p className="text-sm text-stone-700 leading-snug">{notification.message}</p>
           {notification.related_profile && (
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-stone-400 mt-0.5">
               {notification.related_profile.name}
             </p>
           )}
-          <p className="text-xs text-gray-600 mt-1">
+          <p className="text-xs text-stone-400 mt-1">
             {new Date(notification.created_at).toLocaleString()}
           </p>
         </div>
         {!notification.is_read && (
-          <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
+          <div className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0 mt-1.5" />
         )}
       </div>
     </button>
@@ -335,8 +329,14 @@ function ProfileTypeBadge({ type }: { type: string }) {
     mentor: "Mentor",
     mentee: "Mentee",
   };
+  const styles: Record<string, string> = {
+    job_seeker: "bg-blue-50 text-blue-700 border-blue-200",
+    employer: "bg-purple-50 text-purple-700 border-purple-200",
+    mentor: "bg-amber-50 text-amber-700 border-amber-200",
+    mentee: "bg-green-50 text-green-700 border-green-200",
+  };
   return (
-    <span className="px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 text-xs font-medium border border-blue-500/25">
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${styles[type] ?? "bg-stone-100 text-stone-600 border-stone-200"}`}>
       {labels[type] ?? type}
     </span>
   );
@@ -350,22 +350,22 @@ function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
   const raw = result.raw_output as string | undefined;
 
   return (
-    <div className="rounded-xl border border-blue-800 bg-blue-950/20 p-5 space-y-4">
-      <h4 className="font-semibold text-blue-300 text-base">Profile Feedback</h4>
+    <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-5 space-y-4">
+      <h4 className="font-semibold text-amber-800 text-base">Profile Feedback</h4>
 
       {raw ? (
-        <p className="text-sm text-gray-300 leading-relaxed">{raw}</p>
+        <p className="text-sm text-stone-700 leading-relaxed">{raw}</p>
       ) : (
         <>
           {score !== undefined && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-gray-400 uppercase tracking-wide">Clarity</span>
-                <span className="text-sm font-bold text-blue-300">{score}/100</span>
+                <span className="text-xs text-stone-500 uppercase tracking-wide">Clarity</span>
+                <span className="text-sm font-bold text-amber-700">{score}/100</span>
               </div>
-              <div className="h-2 rounded-full bg-gray-800">
+              <div className="h-2 rounded-full bg-stone-200">
                 <div
-                  className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-300 transition-all"
+                  className="h-2 rounded-full bg-amber-500 transition-all"
                   style={{ width: `${score}%` }}
                 />
               </div>
@@ -373,17 +373,17 @@ function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
           )}
 
           {impression && (
-            <p className="text-sm text-gray-300 leading-relaxed">{impression}</p>
+            <p className="text-sm text-stone-700 leading-relaxed">{impression}</p>
           )}
 
           <div className="grid sm:grid-cols-2 gap-3">
             {standsOut.length > 0 && (
-              <div className="rounded-lg bg-green-950/30 border border-green-800/50 p-3">
-                <p className="text-xs font-semibold text-green-400 uppercase tracking-wide mb-2">What stands out</p>
+              <div className="rounded-lg bg-green-50 border border-green-200 p-3">
+                <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">What stands out</p>
                 <ul className="space-y-1.5">
                   {standsOut.map((s, i) => (
-                    <li key={i} className="text-sm text-gray-300 flex gap-2">
-                      <span className="text-green-400 flex-shrink-0">+</span>
+                    <li key={i} className="text-sm text-stone-700 flex gap-2">
+                      <span className="text-green-500 flex-shrink-0">+</span>
                       {s}
                     </li>
                   ))}
@@ -391,12 +391,12 @@ function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
               </div>
             )}
             {couldBeClearer.length > 0 && (
-              <div className="rounded-lg bg-orange-950/30 border border-orange-800/50 p-3">
-                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wide mb-2">Could be clearer</p>
+              <div className="rounded-lg bg-orange-50 border border-orange-200 p-3">
+                <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide mb-2">Could be clearer</p>
                 <ul className="space-y-1.5">
                   {couldBeClearer.map((g, i) => (
-                    <li key={i} className="text-sm text-gray-300 flex gap-2">
-                      <span className="text-orange-400 flex-shrink-0">-</span>
+                    <li key={i} className="text-sm text-stone-700 flex gap-2">
+                      <span className="text-orange-500 flex-shrink-0">-</span>
                       {g}
                     </li>
                   ))}
@@ -409,7 +409,6 @@ function ProfileAnalystCard({ result }: { result: Record<string, unknown> }) {
     </div>
   );
 }
-
 
 function Spinner({ size = "sm" }: { size?: "sm" | "lg" }) {
   const sz = size === "lg" ? "h-8 w-8" : "h-4 w-4";

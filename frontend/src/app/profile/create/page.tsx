@@ -160,10 +160,10 @@ export default function CreateProfilePage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4 py-16">
+      <main className="min-h-screen bg-[#faf8f5] flex flex-col items-center justify-center px-4 py-16">
       <div className="w-full max-w-xl">
-        <h1 className="text-3xl font-bold text-white mb-2 text-center">Create Your Profile</h1>
-        <p className="text-gray-400 text-center mb-8 text-sm">
+        <h1 className="text-3xl font-bold text-stone-900 mb-2 text-center">Create Your Profile</h1>
+        <p className="text-stone-500 text-center mb-8 text-sm">
           Tell us about yourself to find your best matches.
         </p>
 
@@ -173,9 +173,9 @@ export default function CreateProfilePage() {
             <div key={label} className="flex items-center flex-1">
               <div className="flex flex-col items-center gap-1 flex-1">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
-                  i < step ? "bg-blue-600 text-white" :
-                  i === step ? "bg-blue-600 text-white ring-2 ring-blue-400 ring-offset-2 ring-offset-gray-950" :
-                  "bg-gray-800 text-gray-500"
+                  i < step ? "bg-amber-500 text-white" :
+                  i === step ? "bg-amber-600 text-white ring-2 ring-amber-400 ring-offset-2 ring-offset-[#faf8f5]" :
+                  "bg-stone-200 text-stone-400"
                 }`}>
                   {i < step ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -183,16 +183,16 @@ export default function CreateProfilePage() {
                     </svg>
                   ) : i + 1}
                 </div>
-                <span className={`text-xs ${i === step ? "text-blue-400" : "text-gray-600"}`}>{label}</span>
+                <span className={`text-xs ${i === step ? "text-amber-600" : "text-stone-400"}`}>{label}</span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`h-px flex-1 mx-2 mb-5 transition-colors ${i < step ? "bg-blue-600" : "bg-gray-800"}`} />
+                <div className={`h-px flex-1 mx-2 mb-5 transition-colors ${i < step ? "bg-amber-400" : "bg-stone-200"}`} />
               )}
             </div>
           ))}
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+        <div className="bg-white border border-stone-200 rounded-2xl p-8">
           {/* Step 0: Basic Info */}
           {step === 0 && (
             <div className="space-y-5">
@@ -211,11 +211,11 @@ export default function CreateProfilePage() {
                       <button key={pt.value} type="button" onClick={() => handleTypeClick(pt.value)}
                         className={`text-left p-3 rounded-xl border transition-colors ${
                           isSelected
-                            ? "border-blue-500 bg-blue-500/10 text-white"
-                            : "border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600"
+                            ? "border-amber-400 bg-amber-50 text-stone-900"
+                            : "border-stone-200 bg-white text-stone-500 hover:border-stone-300"
                         }`}>
                         <div className="font-medium text-sm">{pt.label}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">{pt.desc}</div>
+                        <div className="text-xs text-stone-400 mt-0.5">{pt.desc}</div>
                       </button>
                     );
                   })}
@@ -264,9 +264,9 @@ export default function CreateProfilePage() {
                   {form.skills.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
                       {form.skills.map((skill) => (
-                        <span key={skill} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 text-sm border border-blue-500/25">
+                        <span key={skill} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 text-stone-700 text-sm border border-stone-200">
                           {skill}
-                          <button type="button" onClick={() => removeSkill(skill)} className="text-blue-400 hover:text-white transition-colors">x</button>
+                          <button type="button" onClick={() => removeSkill(skill)} className="text-stone-400 hover:text-stone-700 transition-colors">x</button>
                         </span>
                       ))}
                     </div>
@@ -302,7 +302,7 @@ export default function CreateProfilePage() {
           {/* Step 3: Review */}
           {step === 3 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white mb-2">Review Your Profile</h3>
+              <h3 className="text-lg font-semibold text-stone-900 mb-2">Review Your Profile</h3>
               <ReviewRow label="Name" value={form.name} />
               <ReviewRow label="Email" value={form.email} />
               <ReviewRow label="Type" value={PROFILE_TYPES.find((p) => p.value === form.profile_type)?.label ?? ""} />
@@ -317,7 +317,7 @@ export default function CreateProfilePage() {
               <ReviewRow label="About" value={form.bio} />
               <ReviewRow label="Looking For" value={form.looking_for} />
               {error && (
-                <div className="rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm px-4 py-3">{error}</div>
+                <div className="rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">{error}</div>
               )}
             </div>
           )}
@@ -325,18 +325,18 @@ export default function CreateProfilePage() {
           <div className="flex gap-3 mt-8">
             {step > 0 && (
               <button type="button" onClick={() => setStep((s) => s - 1)}
-                className="flex-1 rounded-xl border border-gray-700 hover:border-gray-500 bg-gray-800/50 px-4 py-3 font-semibold text-gray-300 transition-colors">
+                className="flex-1 rounded-xl border border-stone-200 hover:bg-stone-50 bg-white px-4 py-3 font-semibold text-stone-600 transition-colors">
                 Back
               </button>
             )}
             {step < STEPS.length - 1 ? (
               <button type="button" onClick={() => setStep((s) => s + 1)} disabled={!canProceed()}
-                className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-3 font-semibold text-white transition-colors">
+                className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-3 font-semibold text-white transition-colors">
                 Continue
               </button>
             ) : (
               <button type="button" onClick={handleSubmit} disabled={loading}
-                className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 px-4 py-3 font-semibold text-white transition-colors flex items-center justify-center gap-2">
+                className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 px-4 py-3 font-semibold text-white transition-colors flex items-center justify-center gap-2">
                 {loading ? <><Spinner />Creating Profile...</> : "Create Profile"}
               </button>
             )}
@@ -345,9 +345,9 @@ export default function CreateProfilePage() {
       </div>
 
       <style jsx global>{`
-        .input { width: 100%; background: #111827; border: 1px solid #1f2937; border-radius: 0.75rem; padding: 0.75rem 1rem; color: #f9fafb; font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
-        .input:focus { border-color: #3b82f6; }
-        .input::placeholder { color: #4b5563; }
+        .input { width: 100%; background: white; border: 1px solid #e7e5e0; border-radius: 0.5rem; padding: 0.75rem 1rem; color: #1c1917; font-size: 0.875rem; outline: none; transition: border-color 0.15s; }
+        .input:focus { border-color: #fbbf24; }
+        .input::placeholder { color: #a8a29e; }
       `}</style>
     </main>
     </>
@@ -357,8 +357,8 @@ export default function CreateProfilePage() {
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-300 mb-1.5">{label}</label>
-      {hint && <p className="text-xs text-gray-500 mb-1.5">{hint}</p>}
+      <label className="block text-sm font-medium text-stone-700 mb-1.5">{label}</label>
+      {hint && <p className="text-xs text-stone-400 mb-1.5">{hint}</p>}
       {children}
     </div>
   );
@@ -366,9 +366,9 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex gap-4 py-2 border-b border-gray-800 last:border-0">
-      <span className="text-sm text-gray-500 w-28 flex-shrink-0">{label}</span>
-      <span className="text-sm text-gray-200 flex-1 whitespace-pre-wrap">{value}</span>
+    <div className="flex gap-4 py-2 border-b border-stone-100 last:border-0">
+      <span className="text-sm text-stone-400 w-28 flex-shrink-0">{label}</span>
+      <span className="text-sm text-stone-700 flex-1 whitespace-pre-wrap">{value}</span>
     </div>
   );
 }

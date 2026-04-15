@@ -168,7 +168,7 @@ function EditProfileContent() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center">
           <Spinner />
         </div>
       </>
@@ -179,7 +179,7 @@ function EditProfileContent() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center text-gray-400">
+        <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center text-stone-500">
           {error ?? "Profile not found."}
         </div>
       </>
@@ -189,23 +189,23 @@ function EditProfileContent() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-950 px-4 py-12">
+      <main className="min-h-screen bg-[#faf8f5] px-4 py-12">
       <div className="w-full max-w-xl mx-auto">
         <div className="mb-8">
-          <Link href="/dashboard" className="text-gray-500 hover:text-gray-300 transition-colors text-sm">
+          <Link href="/dashboard" className="text-stone-400 hover:text-stone-600 transition-colors text-sm">
             - Back to Dashboard
           </Link>
         </div>
 
-        <h1 className="text-3xl font-bold text-white mb-8">Edit Profile</h1>
+        <h1 className="text-3xl font-bold text-stone-900 mb-8">Edit Profile</h1>
 
         {emailChanged && (
-          <div className="rounded-lg bg-green-900/30 border border-green-700 text-green-300 text-sm px-4 py-3 mb-6">
+          <div className="rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 mb-6">
             Email address updated successfully.
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-gray-900 border border-gray-800 rounded-2xl p-8 space-y-5">
+        <form onSubmit={handleSubmit} className="bg-white border border-stone-200 rounded-2xl p-8 space-y-5">
           <Field label="Full Name">
             <input
               type="text"
@@ -226,8 +226,8 @@ function EditProfileContent() {
                     onClick={() => handleTypeClick(pt.value)}
                     className={`text-left p-3 rounded-xl border transition-colors ${
                       isSelected
-                        ? "border-blue-500 bg-blue-500/10 text-white"
-                        : "border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600"
+                        ? "border-amber-400 bg-amber-50 text-stone-900"
+                        : "border-stone-200 bg-white text-stone-500 hover:border-stone-300"
                     }`}
                   >
                     <div className="font-medium text-sm">{pt.label}</div>
@@ -293,13 +293,13 @@ function EditProfileContent() {
                   {form.skills.map((skill) => (
                     <span
                       key={skill}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 text-sm border border-blue-500/25"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-100 text-stone-700 text-sm border border-stone-200"
                     >
                       {skill}
                       <button
                         type="button"
                         onClick={() => removeSkill(skill)}
-                        className="text-blue-400 hover:text-white transition-colors"
+                        className="text-stone-400 hover:text-stone-700 transition-colors"
                       >
                         x
                       </button>
@@ -333,7 +333,7 @@ function EditProfileContent() {
           </Field>
 
           {error && (
-            <div className="rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm px-4 py-3">
+            <div className="rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3">
               {error}
             </div>
           )}
@@ -341,17 +341,17 @@ function EditProfileContent() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 px-4 py-3 font-semibold text-white transition-colors flex items-center justify-center gap-2"
+            className="w-full rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 px-4 py-3 font-semibold text-white transition-colors flex items-center justify-center gap-2"
           >
             {loading ? <><Spinner /> Saving...</> : "Save Changes"}
           </button>
         </form>
 
         {/* Change email */}
-        <div className="mt-8 pt-8 border-t border-gray-800">
-          <h2 className="text-base font-semibold text-white mb-1">Change email address</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Current: <span className="text-gray-300">{getAuthEmail()}</span>
+        <div className="mt-8 pt-8 border-t border-stone-200">
+          <h2 className="text-base font-semibold text-stone-800 mb-1">Change email address</h2>
+          <p className="text-sm text-stone-500 mb-4">
+            Current: <span className="text-stone-700">{getAuthEmail()}</span>
           </p>
           <div className="flex gap-3">
             <input
@@ -378,33 +378,33 @@ function EditProfileContent() {
                   setEmailChangeLoading(false);
                 }
               }}
-              className="px-4 py-2 rounded-xl bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-sm font-medium text-white transition-colors whitespace-nowrap"
+              className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-200 disabled:opacity-50 text-sm font-medium text-stone-700 transition-colors whitespace-nowrap"
             >
               {emailChangeLoading ? "Sending..." : "Send verification"}
             </button>
           </div>
-          {emailChangeMsg && <p className="text-sm text-green-400 mt-2">{emailChangeMsg}</p>}
-          {emailChangeError && <p className="text-sm text-red-400 mt-2">{emailChangeError}</p>}
+          {emailChangeMsg && <p className="text-sm text-green-600 mt-2">{emailChangeMsg}</p>}
+          {emailChangeError && <p className="text-sm text-red-500 mt-2">{emailChangeError}</p>}
         </div>
       </div>
 
       <style jsx global>{`
         .input {
           width: 100%;
-          background: #111827;
-          border: 1px solid #1f2937;
-          border-radius: 0.75rem;
+          background: white;
+          border: 1px solid #e7e5e0;
+          border-radius: 0.5rem;
           padding: 0.75rem 1rem;
-          color: #f9fafb;
+          color: #1c1917;
           font-size: 0.875rem;
           outline: none;
           transition: border-color 0.15s;
         }
         .input:focus {
-          border-color: #3b82f6;
+          border-color: #fbbf24;
         }
         .input::placeholder {
-          color: #4b5563;
+          color: #a8a29e;
         }
       `}</style>
     </main>
@@ -415,8 +415,8 @@ function EditProfileContent() {
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-300 mb-1.5">{label}</label>
-      {hint && <p className="text-xs text-gray-500 mb-1.5">{hint}</p>}
+      <label className="block text-sm font-medium text-stone-700 mb-1.5">{label}</label>
+      {hint && <p className="text-xs text-stone-400 mb-1.5">{hint}</p>}
       {children}
     </div>
   );

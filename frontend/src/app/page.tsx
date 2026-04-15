@@ -62,41 +62,62 @@ export default function Home() {
   };
 
   return (
-    <main className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-blue-950/30 to-purple-950/20 pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent pointer-events-none" />
+    <main className="min-h-screen bg-[#faf8f5] flex flex-col">
+      <header className="px-8 py-7">
+        <span className="text-stone-400 text-xl tracking-[0.25em] uppercase font-sans">jobbr</span>
+      </header>
 
-      <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-3xl mx-auto">
-        <h1 className="text-7xl font-bold tracking-tight bg-gradient-to-br from-white via-blue-100 to-blue-400 bg-clip-text text-transparent mb-4">
-          Jobbr
-        </h1>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
+        <div className="w-full max-w-md">
 
-        <p className="text-xl text-gray-300 mb-4 leading-relaxed text-balance">
-          Find your next opportunity or mentor.
-        </p>
+          {/* Mission statement */}
+          <div className="mb-12">
+            <p className="font-serif text-2xl text-stone-800 leading-relaxed mb-5">
+              Most of us got here because someone believed in us before we believed in ourselves.
+            </p>
+            <p className="text-stone-500 text-base leading-relaxed">
+              A mentor, a referral, an honest conversation at the right moment.
+              Jobbr is for people who want to be that person for someone else - and find the people who will do the same for them.
+            </p>
+          </div>
 
-        <p className="text-sm text-gray-500 mb-6 text-balance">
-          The professional matching platform that understands what you actually need.
-          Job seekers, employers, mentors, and mentees - all in one place.
-        </p>
-
-        <p className="text-xs text-gray-600 mb-10 text-balance">
-          Jobbr is currently invite-only. Enter your email to request access - you&apos;ll hear back once approved.
-        </p>
-
-        <div className="w-full max-w-sm mx-auto">
-          {needName ? (
-            <form onSubmit={handleNameSubmit} className="flex flex-col gap-3">
-              <p className="text-sm text-gray-400 text-center mb-1">
-                One more thing - what&apos;s your name?
+          {/* Auth states */}
+          {sent ? (
+            <div className="border border-stone-200 bg-white rounded-xl px-6 py-8 text-center">
+              <p className="text-stone-800 font-medium mb-1">Check your inbox</p>
+              <p className="text-stone-500 text-sm">
+                We sent a sign-in link to <span className="text-stone-700">{email}</span>. It expires in 15 minutes.
               </p>
-              <div className="flex gap-2">
+              <button
+                onClick={() => { setSent(false); setEmail(""); }}
+                className="mt-5 text-xs text-stone-400 hover:text-stone-600 transition-colors"
+              >
+                Use a different email
+              </button>
+            </div>
+          ) : pending ? (
+            <div className="border border-stone-200 bg-white rounded-xl px-6 py-8 text-center">
+              <p className="text-stone-800 font-medium mb-1">You are on the list</p>
+              <p className="text-stone-500 text-sm">
+                We have your request for <span className="text-stone-700">{email}</span>. We will be in touch soon.
+              </p>
+              <button
+                onClick={() => { setPending(false); setEmail(""); }}
+                className="mt-5 text-xs text-stone-400 hover:text-stone-600 transition-colors"
+              >
+                Use a different email
+              </button>
+            </div>
+          ) : needName ? (
+            <form onSubmit={handleNameSubmit} className="flex flex-col gap-4">
+              <p className="text-stone-500 text-sm">One more thing - what is your name?</p>
+              <div className="flex gap-3">
                 <input
                   type="text"
                   value={firstName}
                   onChange={(e) => { setFirstName(e.target.value); setError(null); }}
                   placeholder="First name"
-                  className="flex-1 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:outline-none px-4 py-3.5 text-sm text-white placeholder-gray-500 transition-colors"
+                  className="flex-1 bg-white border border-stone-200 rounded-lg px-4 py-3 text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-amber-400 transition-colors"
                   autoFocus
                 />
                 <input
@@ -104,93 +125,47 @@ export default function Home() {
                   value={lastName}
                   onChange={(e) => { setLastName(e.target.value); setError(null); }}
                   placeholder="Last name"
-                  className="flex-1 rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:outline-none px-4 py-3.5 text-sm text-white placeholder-gray-500 transition-colors"
+                  className="flex-1 bg-white border border-stone-200 rounded-lg px-4 py-3 text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-amber-400 transition-colors"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading || !firstName.trim() || !lastName.trim()}
-                className="rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3.5 font-semibold text-white transition-colors"
+                className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg px-6 py-3 text-sm font-medium transition-colors"
               >
-                {loading ? "Requesting..." : "Request access"}
+                {loading ? "Sending..." : "Request access"}
               </button>
-              {error && (
-                <p className="text-xs text-red-400 text-center">{error}</p>
-              )}
+              {error && <p className="text-xs text-red-500 text-center">{error}</p>}
               <button
                 type="button"
                 onClick={() => { setNeedName(false); setEmail(""); }}
-                className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+                className="text-xs text-stone-400 hover:text-stone-600 transition-colors text-center"
               >
                 Use a different email
               </button>
             </form>
-          ) : sent ? (
-            <div className="rounded-2xl border border-blue-500/30 bg-blue-500/10 px-6 py-8 text-center">
-              <div className="text-2xl mb-3">📬</div>
-              <p className="text-white font-semibold mb-1">Check your email</p>
-              <p className="text-sm text-gray-400">
-                We sent a sign-in link to <span className="text-gray-200">{email}</span>.
-                It expires in 15 minutes.
-              </p>
-              <button
-                onClick={() => { setSent(false); setEmail(""); }}
-                className="mt-4 text-xs text-gray-500 hover:text-gray-300 transition-colors"
-              >
-                Use a different email
-              </button>
-            </div>
-          ) : pending ? (
-            <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 px-6 py-8 text-center">
-              <div className="text-2xl mb-3">⏳</div>
-              <p className="text-white font-semibold mb-1">Request received</p>
-              <p className="text-sm text-gray-400">
-                Your access request for <span className="text-gray-200">{email}</span> is pending approval.
-                You&apos;ll get an email once you&apos;re approved.
-              </p>
-              <button
-                onClick={() => { setPending(false); setEmail(""); }}
-                className="mt-4 text-xs text-gray-500 hover:text-gray-300 transition-colors"
-              >
-                Use a different email
-              </button>
-            </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <p className="text-stone-500 text-sm mb-1">
+                Jobbr is invite-only. Enter your email to request access or sign in.
+              </p>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(null); }}
-                placeholder="Enter your email"
-                className="rounded-xl bg-gray-900 border border-gray-700 focus:border-blue-500 focus:outline-none px-4 py-3.5 text-sm text-white placeholder-gray-500 transition-colors"
+                placeholder="your@email.com"
+                className="bg-white border border-stone-200 rounded-lg px-4 py-3 text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-amber-400 transition-colors"
               />
               <button
                 type="submit"
                 disabled={loading || !email.trim()}
-                className="rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3.5 font-semibold text-white transition-colors"
+                className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg px-6 py-3 text-sm font-medium transition-colors"
               >
-                {loading ? "Requesting..." : "Request access"}
+                {loading ? "..." : "Continue"}
               </button>
-              {error && (
-                <p className="text-xs text-red-400 text-center">{error}</p>
-              )}
+              {error && <p className="text-xs text-red-500 text-center">{error}</p>}
             </form>
           )}
-        </div>
-
-        <div className="mt-16 grid grid-cols-3 gap-8 w-full max-w-lg">
-          {[
-            { label: "Your Community", desc: "Meet the people building things around you" },
-            { label: "Learn from the Best", desc: "Get guidance from those who've been where you're going" },
-            { label: "Pay It Forward", desc: "Share what you know and lift others as you grow" },
-          ].map((f) => (
-            <div key={f.label} className="flex flex-col items-center text-center gap-2">
-              <div className="text-xs font-semibold text-blue-400 uppercase tracking-widest">
-                {f.label}
-              </div>
-              <div className="text-xs text-gray-500">{f.desc}</div>
-            </div>
-          ))}
         </div>
       </div>
     </main>

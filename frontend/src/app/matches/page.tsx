@@ -13,10 +13,10 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_STYLES: Record<string, string> = {
-  job_seeker: "bg-blue-500/10 text-blue-400 border-blue-500/25",
-  employer: "bg-purple-500/10 text-purple-400 border-purple-500/25",
-  mentor: "bg-amber-500/10 text-amber-400 border-amber-500/25",
-  mentee: "bg-green-500/10 text-green-400 border-green-500/25",
+  job_seeker: "bg-blue-50 text-blue-700 border-blue-200",
+  employer: "bg-purple-50 text-purple-700 border-purple-200",
+  mentor: "bg-amber-50 text-amber-700 border-amber-200",
+  mentee: "bg-green-50 text-green-700 border-green-200",
 };
 
 export default function MatchesPage() {
@@ -104,14 +104,13 @@ export default function MatchesPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-950 px-4 py-10">
-        {/* Connect modal */}
+      <main className="min-h-screen bg-[#faf8f5] px-4 py-10">
         {connectTarget && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setConnectTarget(null)} />
-            <div className="relative z-10 w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-white mb-1">Connect with {connectTarget.name}</h2>
-              <p className="text-sm text-gray-400 mb-4">
+            <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" onClick={() => setConnectTarget(null)} />
+            <div className="relative z-10 w-full max-w-md bg-white border border-stone-200 rounded-2xl p-6 shadow-xl">
+              <h2 className="text-lg font-semibold text-stone-900 mb-1">Connect with {connectTarget.name}</h2>
+              <p className="text-sm text-stone-500 mb-4">
                 Your email will be shared so they can reply directly. Their email stays private.
               </p>
               <textarea
@@ -119,22 +118,22 @@ export default function MatchesPage() {
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={`Hi ${connectTarget.name}, I came across your profile and think we could help each other...`}
                 rows={4}
-                className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-100 placeholder-gray-500 outline-none focus:border-blue-500 resize-none mb-3"
+                className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-900 placeholder-stone-400 outline-none focus:border-amber-400 resize-none mb-3 transition-colors"
               />
               {sendError && (
-                <p className="text-sm text-red-400 mb-3">{sendError}</p>
+                <p className="text-sm text-red-500 mb-3">{sendError}</p>
               )}
               <div className="flex gap-3">
                 <button
                   onClick={() => setConnectTarget(null)}
-                  className="flex-1 rounded-xl border border-gray-700 text-gray-300 hover:text-white py-2.5 text-sm font-medium transition-colors"
+                  className="flex-1 rounded-xl border border-stone-200 text-stone-600 hover:bg-stone-50 py-2.5 text-sm font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSend}
                   disabled={sending || !message.trim()}
-                  className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white py-2.5 text-sm font-semibold transition-colors"
+                  className="flex-1 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white py-2.5 text-sm font-semibold transition-colors"
                 >
                   {sending ? "Sending..." : "Send Request"}
                 </button>
@@ -146,22 +145,22 @@ export default function MatchesPage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mt-8 mb-2">
             <div>
-              <h1 className="text-3xl font-bold text-white">Matches</h1>
-              <p className="text-gray-400 text-sm mt-1">
+              <h1 className="text-3xl font-bold text-stone-900">Matches</h1>
+              <p className="text-stone-500 text-sm mt-1">
                 Curated connections based on complementary goals and skills.
               </p>
             </div>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-gray-300 text-sm font-medium border border-gray-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-stone-50 disabled:opacity-50 text-stone-600 text-sm font-medium border border-stone-200 transition-colors"
             >
               {refreshing ? <><Spinner />Finding...</> : "Refresh"}
             </button>
           </div>
 
           {error && (
-            <div className="rounded-xl bg-red-900/30 border border-red-700 text-red-300 px-5 py-4 text-sm mt-4 mb-6">
+            <div className="rounded-xl bg-red-50 border border-red-200 text-red-600 px-5 py-4 text-sm mt-4 mb-6">
               {error}
             </div>
           )}
@@ -169,18 +168,18 @@ export default function MatchesPage() {
           {loading && (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
               <Spinner />
-              <p className="text-gray-500 text-sm">Loading matches...</p>
+              <p className="text-stone-400 text-sm">Loading matches...</p>
             </div>
           )}
 
           {empty && (
             <div className="text-center py-24">
-              <p className="text-lg text-gray-400 mb-2">No matches yet</p>
-              <p className="text-sm text-gray-600 mb-6">Find people who complement your goals and skills.</p>
+              <p className="text-lg text-stone-500 mb-2">No matches yet</p>
+              <p className="text-sm text-stone-400 mb-6">Find people who complement your goals and skills.</p>
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-white font-semibold transition-colors"
               >
                 {refreshing ? <><Spinner /> Finding matches...</> : "Find Matches"}
               </button>
@@ -223,20 +222,20 @@ function ProfileCard({
   onConnect: () => void;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-4">
+    <div className="bg-white border border-stone-200 rounded-2xl p-5 flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
+        <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center text-lg font-bold text-white flex-shrink-0">
           {profile.name.charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">
-          <div className="font-semibold text-white">{profile.name}</div>
-          <div className="text-sm text-gray-400 truncate">{profile.title}</div>
+          <div className="font-semibold text-stone-900">{profile.name}</div>
+          <div className="text-sm text-stone-500 truncate">{profile.title}</div>
           <div className="flex gap-1.5 mt-1 flex-wrap">
-            <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_STYLES[profile.profile_type] ?? "bg-gray-500/10 text-gray-400 border-gray-500/25"}`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_STYLES[profile.profile_type] ?? "bg-stone-100 text-stone-600 border-stone-200"}`}>
               {TYPE_LABELS[profile.profile_type] ?? profile.profile_type}
             </span>
             {profile.secondary_role && (
-              <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_STYLES[profile.secondary_role] ?? "bg-gray-500/10 text-gray-400 border-gray-500/25"}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full border ${TYPE_STYLES[profile.secondary_role] ?? "bg-stone-100 text-stone-600 border-stone-200"}`}>
                 {TYPE_LABELS[profile.secondary_role] ?? profile.secondary_role}
               </span>
             )}
@@ -245,42 +244,42 @@ function ProfileCard({
       </div>
 
       {profile.location && (
-        <p className="text-xs text-gray-500">{profile.location}</p>
+        <p className="text-xs text-stone-400">{profile.location}</p>
       )}
 
       {profile.bio && (
-        <p className="text-sm text-gray-300 leading-relaxed line-clamp-3">{profile.bio}</p>
+        <p className="text-sm text-stone-600 leading-relaxed line-clamp-3">{profile.bio}</p>
       )}
 
       {profile.skills.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {profile.skills.slice(0, 6).map((skill) => (
-            <span key={skill} className="px-2 py-0.5 rounded-full bg-gray-800 text-gray-400 text-xs border border-gray-700">
+            <span key={skill} className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 text-xs border border-stone-200">
               {skill}
             </span>
           ))}
           {profile.skills.length > 6 && (
-            <span className="text-xs text-gray-600 self-center">+{profile.skills.length - 6}</span>
+            <span className="text-xs text-stone-400 self-center">+{profile.skills.length - 6}</span>
           )}
         </div>
       )}
 
       {profile.looking_for && (
-        <div className="rounded-lg bg-gray-800/50 border border-gray-700/50 px-3 py-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Looking for</p>
-          <p className="text-sm text-gray-300 line-clamp-2">{profile.looking_for}</p>
+        <div className="rounded-lg bg-stone-50 border border-stone-200 px-3 py-2">
+          <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide mb-0.5">Looking for</p>
+          <p className="text-sm text-stone-600 line-clamp-2">{profile.looking_for}</p>
         </div>
       )}
 
       {match.compatibility_score > 0 && (
         <div className="flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded-full bg-gray-800">
+          <div className="flex-1 h-1.5 rounded-full bg-stone-100">
             <div
-              className="h-1.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+              className="h-1.5 rounded-full bg-amber-400"
               style={{ width: `${match.compatibility_score}%` }}
             />
           </div>
-          <span className="text-xs text-gray-500">{match.compatibility_score}% match</span>
+          <span className="text-xs text-stone-400">{match.compatibility_score}% match</span>
         </div>
       )}
 
@@ -289,8 +288,8 @@ function ProfileCard({
         disabled={requested}
         className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${
           requested
-            ? "bg-gray-800 text-gray-500 border border-gray-700 cursor-default"
-            : "bg-blue-600 hover:bg-blue-500 text-white"
+            ? "bg-stone-100 text-stone-400 border border-stone-200 cursor-default"
+            : "bg-amber-600 hover:bg-amber-500 text-white"
         }`}
       >
         {requested ? "Request Sent" : "Connect"}

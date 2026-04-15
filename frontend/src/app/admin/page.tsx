@@ -177,8 +177,8 @@ function AdminPageContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="inline-block w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center">
+        <div className="inline-block w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -186,19 +186,19 @@ function AdminPageContent() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-950 px-6 py-10">
+      <main className="min-h-screen bg-[#faf8f5] px-6 py-10">
       <div className="max-w-5xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage profiles and access requests</p>
+          <h1 className="text-2xl font-bold text-stone-900">Admin Dashboard</h1>
+          <p className="text-stone-500 text-sm mt-1">Manage profiles and access requests</p>
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-900/30 border border-red-700 text-red-300 text-sm px-4 py-3 mb-6">{error}</div>
+          <div className="rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 mb-6">{error}</div>
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit">
+        <div className="flex gap-1 mb-6 bg-white border border-stone-200 rounded-xl p-1 w-fit">
           {(["profiles", "waitlist", "introductions"] as Tab[]).map((t) => (
             <button key={t} onClick={() => {
               setTab(t);
@@ -206,7 +206,7 @@ function AdminPageContent() {
               if (t === "introductions" && introductions.length === 0) loadIntroductions();
             }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
-                tab === t ? "bg-blue-600 text-white" : "text-gray-400 hover:text-gray-200"
+                tab === t ? "bg-amber-600 text-white" : "text-stone-500 hover:text-stone-800"
               }`}>
               {t === "profiles" && `Profiles (${profiles.length})`}
               {t === "waitlist" && `Waitlist (${waitlist.filter((e) => e.status === "pending").length} pending)`}
@@ -222,10 +222,10 @@ function AdminPageContent() {
               <p className="text-gray-500 text-sm">No profiles yet.</p>
             )}
             {profiles.map((p) => (
-              <div key={p.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-start justify-between gap-4">
+              <div key={p.id} className="bg-white border border-stone-200 rounded-xl p-5 flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <span className="font-semibold text-white">{p.name}</span>
+                    <span className="font-semibold text-stone-900">{p.name}</span>
                     <span className={`text-xs px-2 py-0.5 rounded-full border ${typeStyle(p.profile_type)}`}>
                       {p.profile_type.replace("_", " ")}
                     </span>
@@ -235,24 +235,24 @@ function AdminPageContent() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-400">{p.email}</p>
-                  <p className="text-sm text-gray-500 mt-1">{p.title}</p>
-                  <p className="text-sm text-gray-500">{p.location}</p>
+                  <p className="text-sm text-stone-500">{p.email}</p>
+                  <p className="text-sm text-stone-500 mt-1">{p.title}</p>
+                  <p className="text-sm text-stone-400">{p.location}</p>
                   {p.linkedin_url && (
                     <a href={p.linkedin_url} target="_blank" rel="noopener noreferrer"
-                      className="text-xs text-blue-400 hover:underline mt-1 block">
+                      className="text-xs text-amber-600 hover:underline mt-1 block">
                       LinkedIn
                     </a>
                   )}
                   <div className="flex flex-wrap gap-1 mt-2">
                     {p.skills.slice(0, 5).map((s) => (
-                      <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">{s}</span>
+                      <span key={s} className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-500 border border-stone-200">{s}</span>
                     ))}
-                    {p.skills.length > 5 && <span className="text-xs text-gray-600">+{p.skills.length - 5} more</span>}
+                    {p.skills.length > 5 && <span className="text-xs text-stone-400">+{p.skills.length - 5} more</span>}
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                  <span className="text-xs text-gray-600">{new Date(p.created_at).toLocaleDateString()}</span>
+                  <span className="text-xs text-stone-400">{new Date(p.created_at).toLocaleDateString()}</span>
                   <button
                     onClick={() => handleDelete(p.id, p.name)}
                     disabled={deleting === p.id}
@@ -276,7 +276,7 @@ function AdminPageContent() {
                   : "Select a person to see their top unconnected matches."}
               </p>
               <button onClick={loadIntroductions} disabled={introLoading}
-                className="text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors">
+                className="text-sm text-amber-600 hover:text-amber-500 disabled:opacity-50 transition-colors">
                 {introLoading ? "Loading..." : "Refresh"}
               </button>
             </div>
@@ -286,7 +286,7 @@ function AdminPageContent() {
               </div>
             )}
             {!introLoading && introductions.length === 0 && (
-              <p className="text-gray-500 text-sm">No suggestions available. Profiles may be missing embeddings.</p>
+              <p className="text-stone-400 text-sm">No suggestions available. Profiles may be missing embeddings.</p>
             )}
             {!introLoading && introductions.length > 0 && (() => {
               // Build unique people from all pairs
@@ -313,12 +313,12 @@ function AdminPageContent() {
                         onClick={() => setSelectedPersonId(p.id === selectedPersonId ? null : p.id)}
                         className={`w-full text-left px-3 py-2.5 rounded-lg transition-colors ${
                           selectedPersonId === p.id
-                            ? "bg-blue-600 text-white"
-                            : "bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-200"
+                            ? "bg-amber-600 text-white"
+                            : "bg-white border border-stone-200 hover:border-stone-300 text-stone-800"
                         }`}
                       >
                         <p className="text-sm font-medium truncate">{p.name}</p>
-                        <p className={`text-xs mt-0.5 truncate ${selectedPersonId === p.id ? "text-blue-200" : "text-gray-500"}`}>
+                        <p className={`text-xs mt-0.5 truncate ${selectedPersonId === p.id ? "text-amber-100" : "text-stone-400"}`}>
                           {p.profile_type.replace("_", " ")}
                         </p>
                         {selectedPersonId === p.id && (
@@ -341,21 +341,21 @@ function AdminPageContent() {
                       const isSending = sending === key;
                       const isComposing = composingKey === key;
                       return (
-                        <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                        <div key={i} className="bg-white border border-stone-200 rounded-xl p-4">
                           <div className="flex items-center gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-0.5">
-                                <span className="font-medium text-white text-sm">{other.name}</span>
+                                <span className="font-medium text-stone-900 text-sm">{other.name}</span>
                                 <span className={`text-xs px-1.5 py-0.5 rounded-full border ${typeStyle(other.profile_type)}`}>
                                   {other.profile_type.replace("_", " ")}
                                 </span>
                               </div>
-                              <p className="text-xs text-gray-400">{other.title}</p>
-                              <p className="text-xs text-gray-500 mt-0.5">{other.location}</p>
+                              <p className="text-xs text-stone-500">{other.title}</p>
+                              <p className="text-xs text-stone-400 mt-0.5">{other.location}</p>
                               <div className="mt-1.5"><CopyEmail email={other.email} /></div>
                             </div>
                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                              <span className="text-xs text-gray-600">Score: {intro.score}</span>
+                              <span className="text-xs text-stone-400">Score: {intro.score}</span>
                               {isSent && prevIntro && (
                                 <span className="text-xs text-green-600">
                                   Introduced {new Date(prevIntro.introduced_at).toLocaleDateString()}
@@ -373,10 +373,10 @@ function AdminPageContent() {
                                 }}
                                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                                   isComposing
-                                    ? "bg-gray-700 text-gray-300"
+                                    ? "bg-stone-100 text-stone-600 border border-stone-200"
                                     : isSent
-                                    ? "bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300"
-                                    : "bg-blue-600 hover:bg-blue-500 text-white"
+                                    ? "bg-white hover:bg-stone-50 border border-stone-200 text-stone-600"
+                                    : "bg-amber-600 hover:bg-amber-500 text-white"
                                 }`}
                               >
                                 {isComposing ? "Cancel" : isSent ? "Introduce again" : "Introduce"}
@@ -384,18 +384,18 @@ function AdminPageContent() {
                             </div>
                           </div>
                           {isComposing && (
-                            <div className="mt-3 pt-3 border-t border-gray-800 space-y-2">
+                            <div className="mt-3 pt-3 border-t border-stone-100 space-y-2">
                               <textarea
                                 placeholder={`Optional - write the full email body (e.g. "Hi Leo and Sarah, I wanted to connect you two because..."). If left blank a default message is sent.`}
                                 value={introMessage}
                                 onChange={(e) => setIntroMessage(e.target.value)}
                                 rows={3}
-                                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+                                className="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-amber-400 resize-none"
                               />
                               <button
                                 onClick={() => handleSendIntroduction(intro.profile_a.id, intro.profile_b.id, introMessage)}
                                 disabled={isSending}
-                                className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                                className="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
                               >
                                 {isSending ? "Sending..." : "Send introduction"}
                               </button>
@@ -415,8 +415,8 @@ function AdminPageContent() {
         {tab === "waitlist" && (
           <div className="space-y-3">
             {/* Invite form */}
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-2">
-              <h3 className="text-sm font-semibold text-white mb-3">Invite someone</h3>
+            <div className="bg-white border border-stone-200 rounded-xl p-5 mb-2">
+              <h3 className="text-sm font-semibold text-stone-800 mb-3">Invite someone</h3>
               <form onSubmit={handleInvite} className="flex gap-2">
                 <input
                   type="email"
@@ -424,12 +424,12 @@ function AdminPageContent() {
                   placeholder="email@example.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                  className="flex-1 bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm text-stone-900 placeholder-stone-400 focus:outline-none focus:border-amber-400"
                 />
                 <button
                   type="submit"
                   disabled={inviting}
-                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                  className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
                 >
                   {inviting ? "Sending..." : "Send invite"}
                 </button>
@@ -442,15 +442,15 @@ function AdminPageContent() {
               <p className="text-gray-500 text-sm">No waitlist entries yet.</p>
             )}
             {waitlist.map((e) => (
-              <div key={e.id} className="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between gap-4">
+              <div key={e.id} className="bg-white border border-stone-200 rounded-xl p-5 flex items-center justify-between gap-4">
                 <div>
                   {(e.first_name || e.last_name) && (
-                    <p className="font-medium text-white">
+                    <p className="font-medium text-stone-900">
                       {[e.first_name, e.last_name].filter(Boolean).join(" ")}
                     </p>
                   )}
-                  <p className={e.first_name || e.last_name ? "text-sm text-gray-400" : "font-medium text-white"}>{e.email}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={e.first_name || e.last_name ? "text-sm text-stone-500" : "font-medium text-stone-900"}>{e.email}</p>
+                  <p className="text-xs text-stone-400 mt-1">
                     Requested {new Date(e.created_at).toLocaleDateString()}
                     {e.approved_at && ` - Approved ${new Date(e.approved_at).toLocaleDateString()}`}
                   </p>
@@ -460,13 +460,13 @@ function AdminPageContent() {
                     <button
                       onClick={() => handleApprove(e.email)}
                       disabled={approving === e.email}
-                      className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+                      className="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
                     >
                       {approving === e.email ? "Approving..." : "Approve"}
                     </button>
                   ) : (
                     <>
-                      <span className="text-xs px-3 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/25">
+                      <span className="text-xs px-3 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
                         Approved
                       </span>
                       <button
@@ -498,10 +498,10 @@ function CopyEmail({ email, light = false }: { email: string; light?: boolean })
   };
   return (
     <span className="flex items-center gap-1">
-      <span className={`text-xs font-mono ${light ? "text-blue-300" : "text-gray-600"}`}>{email}</span>
+      <span className={`text-xs font-mono ${light ? "text-amber-200" : "text-stone-500"}`}>{email}</span>
       <button
         onClick={copy}
-        className={`text-xs px-1 rounded transition-colors ${light ? "text-blue-400 hover:text-blue-200" : "text-gray-600 hover:text-gray-300"}`}
+        className={`text-xs px-1 rounded transition-colors ${light ? "text-amber-300 hover:text-amber-100" : "text-stone-400 hover:text-stone-700"}`}
         title="Copy email"
       >
         {copied ? "✓" : "⎘"}
@@ -512,10 +512,10 @@ function CopyEmail({ email, light = false }: { email: string; light?: boolean })
 
 function typeStyle(type: string): string {
   const styles: Record<string, string> = {
-    job_seeker: "bg-blue-500/10 text-blue-400 border-blue-500/25",
-    employer: "bg-purple-500/10 text-purple-400 border-purple-500/25",
-    mentor: "bg-amber-500/10 text-amber-400 border-amber-500/25",
-    mentee: "bg-green-500/10 text-green-400 border-green-500/25",
+    job_seeker: "bg-blue-50 text-blue-700 border-blue-200",
+    employer: "bg-purple-50 text-purple-700 border-purple-200",
+    mentor: "bg-amber-50 text-amber-700 border-amber-200",
+    mentee: "bg-green-50 text-green-700 border-green-200",
   };
-  return styles[type] ?? "bg-gray-500/10 text-gray-400 border-gray-500/25";
+  return styles[type] ?? "bg-stone-100 text-stone-600 border-stone-200";
 }
