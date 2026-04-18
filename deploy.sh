@@ -17,7 +17,7 @@ SSH_KEY="${JOBBR_SSH_KEY:-$HOME/.ssh/id_ed25519}"
 SSH="ssh -i $SSH_KEY -o StrictHostKeyChecking=no root@$APP_HOST"
 
 echo "==> Syncing code..."
-rsync -az --exclude='.git' --exclude='__pycache__' --exclude='.next' \
+rsync -az --delete --exclude='.git' --exclude='__pycache__' --exclude='.next' \
   --exclude='node_modules' --exclude='.venv' \
   --exclude='.env' --exclude='.env.local' \
   -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
