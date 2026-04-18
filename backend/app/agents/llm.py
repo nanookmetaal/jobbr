@@ -59,7 +59,9 @@ async def analyze_profile(profile: dict, previous_analyses: Optional[dict] = Non
         "Evaluate how well the profile communicates this in a warm, human way. "
         "Be honest and calibrated: if a profile is clear and genuine, say so with a high score. "
         "Do not flag things through a recruiter or ATS lens - avoid advice about shortlisting, "
-        "keyword optimisation, or impressing hiring managers. Focus on clarity and authenticity."
+        "keyword optimisation, or impressing hiring managers. Focus on clarity and authenticity. "
+        "Use only plain ASCII text in your response - no em dashes, smart quotes, or other special characters. "
+        "Use a hyphen (-) instead of an em dash."
     )
     analyst_human = (
         f"Analyze the following profile:\n\n{profile_str}\n\n"
@@ -132,7 +134,8 @@ async def rank_matches(profile: dict, candidates: list[dict]) -> list[dict]:
 
     system = (
         "You are a professional networking expert for a builders community. "
-        "Your job is to evaluate how well a set of candidates complement a given profile."
+        "Your job is to evaluate how well a set of candidates complement a given profile. "
+        "Use only plain ASCII text - no em dashes, smart quotes, or special characters."
     )
     human = (
         f"Profile:\n{profile_str}\n\n"

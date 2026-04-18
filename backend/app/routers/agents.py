@@ -1,7 +1,10 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -59,8 +62,9 @@ async def _persist_analysis(profile_id: uuid.UUID, profile_dict: dict, prev_anal
             for agent_type, result in results.items():
                 db.add(AgentAnalysis(profile_id=profile_id, agent_type=agent_type, result=result))
             await db.commit()
-        except Exception:
+        except Exception as e:
             await db.rollback()
+            logger.exception("Background analysis failed for profile %s: %s", profile_id, e)
         break
 
 
