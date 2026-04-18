@@ -75,7 +75,13 @@ async def send_connection_request(
 async def get_sent_requests(
     profile_id: str,
     db: AsyncSession = Depends(get_db),
+    current_email: str = Depends(get_current_email),
 ):
+    profile = await db.get(Profile, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    if profile.email.lower() != current_email.lower():
+        raise HTTPException(status_code=403, detail="Access denied")
     result = await db.execute(
         select(ConnectionRequest).where(ConnectionRequest.from_profile_id == profile_id)
     )

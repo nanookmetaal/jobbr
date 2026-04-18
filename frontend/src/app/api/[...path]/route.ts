@@ -28,8 +28,11 @@ async function proxy(
 
   const responseHeaders = new Headers(upstream.headers);
   responseHeaders.delete("transfer-encoding");
+  responseHeaders.delete("content-encoding");
 
-  return new NextResponse(upstream.body, {
+  const responseBody = upstream.status === 204 ? null : await upstream.arrayBuffer();
+
+  return new NextResponse(responseBody, {
     status: upstream.status,
     headers: responseHeaders,
   });
