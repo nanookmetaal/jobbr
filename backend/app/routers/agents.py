@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from datetime import datetime, timezone
 
 from sqlalchemy import delete, func, or_, select
@@ -52,9 +52,22 @@ async def get_analyses(
     return latest
 
 
-@router.post("/analyze", response_model=list[AgentAnalysisResponse])
+async def _persist_analysis(profile_id: uuid.UUID, profile_dict: dict, prev_analyses: dict):
+    async for db in get_db():
+        try:
+            results = await analyze_profile(profile_dict, previous_analyses=prev_analyses)
+            for agent_type, result in results.items():
+                db.add(AgentAnalysis(profile_id=profile_id, agent_type=agent_type, result=result))
+            await db.commit()
+        except Exception:
+            await db.rollback()
+        break
+
+
+@router.post("/analyze", status_code=202)
 async def run_analysis(
     body: RunAgentsRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_email: str = Depends(get_current_email),
 ):
@@ -106,7 +119,6 @@ async def run_analysis(
         "website_url": profile.website_url,
     }
 
-    # Fetch previous analysis to avoid repeating already-addressed feedback
     prev_result = await db.execute(
         select(AgentAnalysis)
         .where(AgentAnalysis.profile_id == profile.id)
@@ -115,23 +127,8 @@ async def run_analysis(
     )
     prev_analyses = {a.agent_type: a.result for a in prev_result.scalars().all()}
 
-    results = await analyze_profile(profile_dict, previous_analyses=prev_analyses)
-
-    saved = []
-    for agent_type, result in results.items():
-        analysis = AgentAnalysis(
-            profile_id=profile.id,
-            agent_type=agent_type,
-            result=result,
-        )
-        db.add(analysis)
-        saved.append(analysis)
-
-    await db.commit()
-    for a in saved:
-        await db.refresh(a)
-
-    return saved
+    background_tasks.add_task(_persist_analysis, profile.id, profile_dict, prev_analyses)
+    return {"status": "analyzing"}
 
 
 @router.get("/matches/{profile_id}", response_model=list[MatchResponse])

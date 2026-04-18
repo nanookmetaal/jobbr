@@ -21,6 +21,8 @@ function DashboardContent() {
   const [analysisRunAt, setAnalysisRunAt] = useState<string | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const latestAnalysisIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -51,6 +53,7 @@ function DashboardContent() {
         if (saved.length > 0) {
           setAnalyses(saved);
           setAnalysisRunAt(saved[0].created_at);
+          latestAnalysisIdRef.current = saved[0].id;
         }
         setNotifications(savedNotifs);
       })
@@ -72,16 +75,46 @@ function DashboardContent() {
     if (!profileId) return;
     setLoadingAnalysis(true);
     setError(null);
+
     try {
-      const results = await api.agents.analyze(profileId);
-      setAnalyses(results);
-      setAnalysisRunAt(results[0]?.created_at ?? new Date().toISOString());
+      await api.agents.analyze(profileId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Analysis failed");
-    } finally {
       setLoadingAnalysis(false);
+      return;
     }
+
+    const previousId = latestAnalysisIdRef.current;
+    const startedAt = Date.now();
+
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      if (Date.now() - startedAt > 90_000) {
+        clearInterval(pollRef.current!);
+        pollRef.current = null;
+        setLoadingAnalysis(false);
+        setError("Analysis is taking longer than expected - refresh the page to see results.");
+        return;
+      }
+      try {
+        const results = await api.agents.getAnalyses(profileId);
+        if (results.length > 0 && results[0].id !== previousId) {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setAnalyses(results);
+          setAnalysisRunAt(results[0].created_at);
+          latestAnalysisIdRef.current = results[0].id;
+          setLoadingAnalysis(false);
+        }
+      } catch {
+        // ignore transient poll errors
+      }
+    }, 3000);
   };
+
+  useEffect(() => {
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
 
   const handleMarkRead = async (notificationId: string) => {
     try {

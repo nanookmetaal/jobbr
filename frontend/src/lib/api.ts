@@ -160,7 +160,7 @@ export const api = {
       request<AgentAnalysis[]>(`/agents/analyses/${profileId}`),
 
     analyze: (profileId: string) =>
-      request<AgentAnalysis[]>("/agents/analyze", {
+      request<{ status: string }>("/agents/analyze", {
         method: "POST",
         body: JSON.stringify({ profile_id: profileId }),
       }),
