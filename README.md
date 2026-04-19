@@ -9,9 +9,8 @@ A professional matching platform - think Tinder for jobs and mentorship. Create 
 - Profile creation and editing (job seeker, employer, mentor, mentee)
 - Profile analysis - completeness score, strengths, gaps, and improvement tips
 - Smart matching using vector embeddings (Voyage AI) - finds complementary profiles, not just similar ones
-- Swipe left/right on matches
-- Mutual match detection with coffee invite notification
-- Admin dashboard for managing profiles and approving waitlist requests
+- Connection requests with a custom message to matched profiles
+- Admin dashboard for managing profiles, approving waitlist requests, and sending introductions between matched users
 
 ## Architecture
 
@@ -136,12 +135,21 @@ erDiagram
         uuid profile_id_a FK
         uuid profile_id_b FK
         int compatibility_score
+        text match_reason
     }
-    swipes {
+    connection_requests {
         uuid id PK
-        uuid swiper_id FK
-        uuid swiped_id FK
-        string direction
+        uuid from_profile_id FK
+        uuid to_profile_id FK
+        string message
+        string status
+    }
+    introductions {
+        uuid id PK
+        uuid profile_id_a FK
+        uuid profile_id_b FK
+        string introduced_by
+        text message
     }
     notifications {
         uuid id PK
@@ -176,7 +184,8 @@ erDiagram
     }
 
     profiles ||--o{ matches : "has"
-    profiles ||--o{ swipes : "gives/receives"
+    profiles ||--o{ connection_requests : "sends/receives"
+    profiles ||--o{ introductions : "involved in"
     profiles ||--o{ notifications : "receives"
     profiles ||--o{ agent_analyses : "has"
 ```
@@ -191,7 +200,7 @@ erDiagram
 | Embeddings | Voyage AI (`voyage-3`, 1024 dimensions) |
 | AI analysis | LangChain + Anthropic Claude |
 | Email | Resend |
-| Hosting | Vercel (frontend + backend as serverless functions) |
+| Hosting | Proxmox LXC (self-hosted) via Cloudflare Tunnels, or Vercel |
 
 ## Running locally
 
@@ -246,13 +255,13 @@ Copy `backend/.env.example` to `backend/.env` and fill in all values:
 | `RESEND_API_KEY` | https://resend.com |
 | `EMAIL_FROM` | A sender address on a domain verified in Resend |
 | `JWT_SECRET` | Any random string (`openssl rand -hex 32`) |
-| `ADMIN_SECRET` | Any random string (`openssl rand -hex 20`) |
+| `SERVICE_KEY` | Any random string (`openssl rand -hex 32`) - must match frontend |
 | `ADMIN_EMAIL` | Email address that receives access request notifications |
 | `FRONTEND_URL` | `http://localhost:3000` for local dev |
 
-## Deploying to Vercel
+## Deployment
 
-See [CLAUDE.md](CLAUDE.md) for full step-by-step deployment instructions, including how to set up the Neon database, configure env vars, and add the first admin.
+See [CLAUDE.md](CLAUDE.md) for full step-by-step instructions for both Proxmox (self-hosted) and Vercel deployments, including database setup, env vars, and adding the first admin.
 
 ## Using Claude Code?
 
