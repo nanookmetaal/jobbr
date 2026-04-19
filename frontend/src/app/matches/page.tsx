@@ -187,7 +187,7 @@ export default function MatchesPage() {
           )}
 
           {!loading && matches.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <div className="grid grid-cols-1 gap-4 mt-6">
               {matches.map((match) => {
                 const profile = match.matched_profile;
                 if (!profile) return null;
@@ -267,7 +267,7 @@ function ProfileCard({
       {profile.looking_for && (
         <div className="rounded-lg bg-stone-50 border border-stone-200 px-3 py-2">
           <p className="text-xs font-semibold text-stone-400 uppercase tracking-wide mb-0.5">Looking for</p>
-          <p className="text-sm text-stone-600 line-clamp-2">{profile.looking_for}</p>
+          <p className="text-sm text-stone-600">{profile.looking_for}</p>
         </div>
       )}
 
