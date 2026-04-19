@@ -342,7 +342,7 @@ function AdminPageContent() {
                       const isComposing = composingKey === key;
                       return (
                         <div key={i} className="bg-white border border-stone-200 rounded-xl p-4">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-start gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-0.5">
                                 <span className="font-medium text-stone-900 text-sm">{other.name}</span>
@@ -504,10 +504,13 @@ function CopyEmail({ email, light = false }: { email: string; light?: boolean })
       <span className={`text-xs font-mono ${light ? "text-amber-200" : "text-stone-500"}`}>{email}</span>
       <button
         onClick={copy}
-        className={`text-xs px-1 rounded transition-colors ${light ? "text-amber-300 hover:text-amber-100" : "text-stone-400 hover:text-stone-700"}`}
+        className={`px-1 rounded transition-colors ${light ? "text-amber-300 hover:text-amber-100" : "text-stone-600 hover:text-stone-900"}`}
         title="Copy email"
       >
-        {copied ? "✓" : "⎘"}
+        {copied
+          ? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><polyline points="20 6 9 17 4 12" /></svg>
+          : <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        }
       </button>
     </span>
   );
