@@ -268,6 +268,7 @@ async def run_matches(
             profile_id_a=profile.id,
             profile_id_b=candidate.id,
             compatibility_score=int(ranking.get("compatibility_score", 0)),
+            match_reason=ranking.get("match_reason") or None,
         )
         db.add(match)
         saved_matches.append((match, candidate))

@@ -89,3 +89,6 @@ async def init_db():
                 CONSTRAINT uq_introduction UNIQUE (profile_id_a, profile_id_b)
             )
         """))
+        await conn.execute(text(
+            "ALTER TABLE matches ADD COLUMN IF NOT EXISTS match_reason text"
+        ))

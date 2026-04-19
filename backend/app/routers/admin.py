@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_admin
-from app.models import Admin, ConnectionRequest, Introduction, Notification, Profile, WaitlistEntry
+from app.models import Admin, ConnectionRequest, Introduction, Match, Notification, Profile, WaitlistEntry
 from app.schemas import ProfileResponse
 
 
@@ -226,10 +226,21 @@ async def get_suggested_introductions(
         for i in intros_result.scalars().all()
     }
 
+    matches_result = await db.execute(
+        select(Match).where(Match.match_reason.is_not(None))
+    )
+    match_reasons: dict[tuple[str, str], str] = {
+        tuple(sorted([str(m.profile_id_a), str(m.profile_id_b)])): m.match_reason
+        for m in matches_result.scalars().all()
+        if m.match_reason
+    }
+
     for s in suggestions[:15]:
         key = tuple(sorted([str(s["profile_a"]["id"]), str(s["profile_b"]["id"])]))
         if key in past_intros:
             s["previous_introduction"] = past_intros[key]
+        if key in match_reasons:
+            s["match_reason"] = match_reasons[key]
 
     return suggestions[:15]
 

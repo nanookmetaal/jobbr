@@ -82,6 +82,7 @@ export interface SuggestedIntroduction {
   profile_a: Profile;
   profile_b: Profile;
   score: number;
+  match_reason?: string;
   previous_introduction?: {
     introduced_by: string;
     introduced_at: string;

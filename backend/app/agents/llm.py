@@ -142,7 +142,8 @@ async def rank_matches(profile: dict, candidates: list[dict]) -> list[dict]:
         f"Candidates:\n{candidates_str}\n\n"
         "For each candidate return a JSON array where every item has exactly these keys:\n"
         "- 'id': the candidate's id (string)\n"
-        "- 'compatibility_score': integer 0-100 (how well they complement the profile)\n\n"
+        "- 'compatibility_score': integer 0-100 (how well they complement the profile)\n"
+        "- 'match_reason': 1-2 sentence plain-text explanation of the strongest complementary qualities between them - only positive, no caveats or limitations\n\n"
         "Return only the JSON array, no other text."
     )
 

@@ -356,6 +356,9 @@ function AdminPageContent() {
                             </div>
                             <div className="flex flex-col items-end gap-2 flex-shrink-0">
                               <span className="text-xs text-stone-400">Score: {intro.score}</span>
+                              {intro.match_reason && (
+                                <p className="text-xs text-stone-500 italic text-right max-w-xs">{intro.match_reason}</p>
+                              )}
                               {isSent && prevIntro && (
                                 <span className="text-xs text-green-600">
                                   Introduced {new Date(prevIntro.introduced_at).toLocaleDateString()}
