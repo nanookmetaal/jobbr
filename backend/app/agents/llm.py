@@ -63,8 +63,27 @@ async def analyze_profile(profile: dict, previous_analyses: Optional[dict] = Non
         "Use only plain ASCII text in your response - no em dashes, smart quotes, or other special characters. "
         "Use a hyphen (-) instead of an em dash."
     )
+    field_schema = (
+        "Profile field reference (what users could provide for each field):\n"
+        "- name: display name\n"
+        "- profile_type / secondary_role: selected from fixed options (job_seeker, employer, mentor, mentee)\n"
+        "- location: city or region, freeform text\n"
+        "- title: one-line headline / current role\n"
+        "- bio: freeform paragraph - who they are and what they bring\n"
+        "- looking_for: freeform paragraph - what they want from this community\n"
+        "- skills: list of skill tags\n"
+        "- experience_years: number\n"
+        "- work_history: freeform text listing roles and companies (optional)\n"
+        "- education: freeform text listing degrees and certifications (optional)\n"
+        "- linkedin_url: URL only - no description field exists in the form\n"
+        "- website_url: URL only (GitHub, portfolio, or personal site) - no description field exists in the form\n\n"
+        "Do not suggest adding information that the form does not support. "
+        "For example, do not ask the user to explain what their website is about - they can only provide a URL. "
+        "Only flag genuine gaps in fields where the user had a real opportunity to say more.\n\n"
+    )
+
     analyst_human = (
-        f"Analyze the following profile:\n\n{profile_str}\n\n"
+        f"{field_schema}Analyze the following profile:\n\n{profile_str}\n\n"
         + (
             f"This person has updated their profile based on prior feedback.{prev_gaps_str}\n"
             "Only list a gap if it genuinely still applies. If a previously flagged issue "
